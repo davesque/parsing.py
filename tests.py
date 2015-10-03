@@ -7,6 +7,31 @@ from parsing import (
 )
 
 
+class TestParserBuilding(unittest.TestCase):
+    def test_it_should_allow_building_of_parser_with_bitwise_operations(self):
+        p1 = alphas & digits
+        p2 = alphas | digits
+
+        self.assertEqual(p1('arst1234'), (('arst', '1234'), ''))
+        self.assertEqual(p2('arst1234'), ('arst', '1234'))
+        self.assertEqual(p2('1234arst'), ('1234', 'arst'))
+
+        p3 = positive_integer | (alphas & (digits | spaces))
+
+        self.assertEqual(
+            p3('1234arst1234    '),
+            (1234, 'arst1234    '),
+        )
+        self.assertEqual(
+            p3('arst1234    1234'),
+            (('arst', '1234'), '    1234'),
+        )
+        self.assertEqual(
+            p3('arst    1234'),
+            (('arst', '    '), '1234'),
+        )
+
+
 class TestTake(unittest.TestCase):
     def test_it_should_parse_the_given_number_of_characters(self):
         p = Take(3)
