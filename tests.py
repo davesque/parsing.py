@@ -2,7 +2,7 @@ import unittest
 
 from parsing import (
     NotEnoughInputError, ImproperInputError,
-    Take, TakeIf, TakeWhile, alpha, TakeUntil,
+    Take, TakeIf, TakeWhile, alpha, space, TakeUntil, Token,
 )
 
 
@@ -76,6 +76,20 @@ class TestTakeUntil(unittest.TestCase):
 class TestAlpha(unittest.TestCase):
     def test_it_should_parse_input_which_is_alphabetical(self):
         self.assertEqual(alpha('arst1234'), ('arst', '1234'))
+
+
+class TestSpace(unittest.TestCase):
+    def test_it_should_parse_input_which_is_whitespace(self):
+        self.assertEqual(space(' \t\n\rarst'), (' \t\n\r', 'arst'))
+
+
+class TestToken(unittest.TestCase):
+    def test_it_should_parse_using_the_given_parser_and_consume_whitespace(self):
+        p = Token(alpha)
+
+        self.assertEqual(p('arst arst'), ('arst', 'arst'))
+        self.assertEqual(p('arst '), ('arst', ''))
+        self.assertEqual(p('arst'), ('arst', ''))
 
 
 if __name__ == '__main__':

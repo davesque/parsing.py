@@ -32,23 +32,23 @@ class Take(Parser):
 
 
 class TakeIf(Take):
-    def __init__(self, n, p):
+    def __init__(self, n, f):
         super(TakeIf, self).__init__(n)
 
-        self.p = p
+        self.f = f
 
     def parse(self, xs):
         x, xs = super(TakeIf, self).parse(xs)
 
-        if not self.p(x):
+        if not self.f(x):
             raise ImproperInputError('Condition not met for parsed input')
 
         return (x, xs)
 
 
 class TakeWhile(TakeIf):
-    def __init__(self, p):
-        super(TakeWhile, self).__init__(1, p)
+    def __init__(self, f):
+        super(TakeWhile, self).__init__(1, f)
 
     def parse(self, xs):
         result = []
@@ -71,6 +71,7 @@ class TakeWhile(TakeIf):
 
 
 alpha = TakeWhile(lambda x: x.isalpha())
+space = TakeWhile(lambda x: x.isspace())
 
 
 class TakeUntil(Parser):
@@ -84,3 +85,19 @@ class TakeUntil(Parser):
             raise ImproperInputError('Substring not found in input')
 
         return (xs[:i], xs[i:])
+
+
+class Token(Parser):
+    def __init__(self, p, separation_parser=space):
+        self.p = p
+        self.s = separation_parser
+
+    def parse(self, xs):
+        x, xs = self.p(xs)
+
+        try:
+            _, xs = self.s(xs)
+        except NotEnoughInputError:
+            pass
+
+        return (x, xs)
