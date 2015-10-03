@@ -48,6 +48,17 @@ class TestTakeWhile(unittest.TestCase):
         self.assertEqual(p.parse('ars1'), ('ars', '1'))
         self.assertEqual(p.parse('arst'), ('arst', ''))
 
+    def test_it_should_raise_an_error_under_certain_conditions(self):
+        p = TakeWhile(lambda x: x.isalpha())
+
+        # If no characters could be successfully parsed from a non-empty input
+        with self.assertRaises(ConditionNotMetError):
+            p.parse('1234')
+
+        # If given input is empty
+        with self.assertRaises(NotEnoughInputError):
+            p.parse('')
+
 
 if __name__ == '__main__':
     unittest.main()

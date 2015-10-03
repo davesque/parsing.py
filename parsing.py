@@ -48,11 +48,18 @@ class TakeWhile(TakeIf):
     def parse(self, xs):
         result = []
 
+        i = 0
         while True:
             try:
                 x, xs_ = super(TakeWhile, self).parse(xs)
-            except (NotEnoughInputError, ConditionNotMetError):
+            except (NotEnoughInputError, ConditionNotMetError) as e:
+                # If no parsing can be done at all, raise an error
+                if i == 0:
+                    raise e
+
                 return (''.join(result), xs)
 
             result.append(x)
             xs = xs_
+
+            i += 1
