@@ -120,15 +120,6 @@ class Construct(Parser):
 positive_integer = Construct(int, digit)
 
 
-class Accept(Parser):
+class Accept(TakeIf):
     def __init__(self, s):
-        self.s = s
-        self.n = len(s)
-
-    def parse(self, xs):
-        s = self.s
-
-        if not xs.startswith(s):
-            raise ImproperInputError('Required string not found')
-
-        return (s, xs[self.n:])
+        super(Accept, self).__init__(len(s), lambda x: x == s)
