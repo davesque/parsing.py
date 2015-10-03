@@ -2,7 +2,7 @@ import unittest
 
 from parsing import (
     NotEnoughInputError, ImproperInputError, Take, TakeIf, TakeWhile, digit,
-    alpha, space, TakeUntil, Token, word, positive_integer,
+    alpha, space, TakeUntil, Token, word, positive_integer, Accept,
 )
 
 
@@ -107,6 +107,17 @@ class TestWord(unittest.TestCase):
 class TestPositiveInteger(unittest.TestCase):
     def test_it_should_parse_digits_and_return_a_number(self):
         self.assertEqual(positive_integer('1234 arst'), (1234, ' arst'))
+
+
+class TestAccept(unittest.TestCase):
+    def test_it_should_parse_a_specific_string_from_the_front_of_the_input(self):
+        p = Accept('arst')
+
+        self.assertEqual(p('arst1234'), ('arst', '1234'))
+
+    def test_it_should_raise_an_error_if_parsing_fails(self):
+        with self.assertRaises(ImproperInputError):
+            Accept('arst').parse('ars1234')
 
 
 if __name__ == '__main__':
