@@ -1,26 +1,36 @@
 import unittest
 
-from parsing import Take
+from parsing import (
+    Take, TakeIf, ParseError,
+)
 
 
 class TestTake(unittest.TestCase):
-    def setUp(self):
-        self.s = 'arst'
-
     def test_it_should_parse_the_given_number_of_characters(self):
         p = Take(3)
 
-        self.assertEqual(p.parse(self.s), ('ars', 't'))
+        self.assertEqual(p.parse('arst'), ('ars', 't'))
 
     def test_it_should_require_a_number_greater_than_zero(self):
-        with self.assertRaises(Take.TakeError):
+        with self.assertRaises(ValueError):
             Take(0)
 
     def test_it_should_raise_an_exception_if_parsing_fails(self):
-        p = Take(10)
+        with self.assertRaises(ParseError):
+            Take(10).parse('arst')
 
-        with self.assertRaises(Take.TakeError):
-            self.assertEqual(p.parse(self.s), ('ars', 't'))
+
+class TestTakeIf(unittest.TestCase):
+    def test_it_should_conditionally_parse_the_given_number_of_characters(self):
+        p = TakeIf(3, lambda x: x.isalpha())
+
+        self.assertEqual(p.parse('arst'), ('ars', 't'))
+
+    def test_it_should_raise_an_exception_if_parsing_fails(self):
+        p = TakeIf(3, lambda x: x.isalpha())
+
+        with self.assertRaises(ParseError):
+            p.parse('ar12')
 
 
 if __name__ == '__main__':
