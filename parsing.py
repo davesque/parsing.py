@@ -2,6 +2,14 @@ class ParseError(Exception):
     pass
 
 
+class NotEnoughInputError(ParseError):
+    pass
+
+
+class ConditionNotMetError(ParseError):
+    pass
+
+
 class Take(object):
     def __init__(self, n):
         if n < 1:
@@ -13,7 +21,7 @@ class Take(object):
         n = self.n
 
         if n > len(xs):
-            raise ParseError('Not enough input to parse')
+            raise NotEnoughInputError('Not enough input to parse')
 
         return (xs[:n], xs[n:])
 
@@ -28,24 +36,22 @@ class TakeIf(Take):
         x, xs = super(TakeIf, self).parse(xs)
 
         if not self.p(x):
-            raise ParseError('Condition not met for parsed input')
+            raise ConditionNotMetError('Condition not met for parsed input')
 
         return (x, xs)
 
 
-class TakeWhile(Take):
+class TakeWhile(TakeIf):
     def __init__(self, p):
-        super(TakeWhile, self).__init__(1)
-
-        self.p = p
+        super(TakeWhile, self).__init__(1, p)
 
     def parse(self, xs):
         result = []
 
         while True:
-            x, xs_ = super(TakeWhile, self).parse(xs)
-
-            if not self.p(x):
+            try:
+                x, xs_ = super(TakeWhile, self).parse(xs)
+            except (NotEnoughInputError, ConditionNotMetError):
                 return (''.join(result), xs)
 
             result.append(x)

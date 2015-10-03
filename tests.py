@@ -1,7 +1,7 @@
 import unittest
 
 from parsing import (
-    ParseError,
+    NotEnoughInputError, ConditionNotMetError,
     Take, TakeIf, TakeWhile,
 )
 
@@ -17,7 +17,7 @@ class TestTake(unittest.TestCase):
             Take(0)
 
     def test_it_should_raise_an_exception_if_parsing_fails(self):
-        with self.assertRaises(ParseError):
+        with self.assertRaises(NotEnoughInputError):
             Take(10).parse('arst')
 
 
@@ -34,8 +34,11 @@ class TestTakeIf(unittest.TestCase):
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         p = TakeIf(3, lambda x: x.isalpha())
 
-        with self.assertRaises(ParseError):
+        with self.assertRaises(ConditionNotMetError):
             p.parse('ar12')
+
+        with self.assertRaises(NotEnoughInputError):
+            p.parse('ar')
 
 
 class TestTakeWhile(unittest.TestCase):
@@ -43,6 +46,7 @@ class TestTakeWhile(unittest.TestCase):
         p = TakeWhile(lambda x: x.isalpha())
 
         self.assertEqual(p.parse('ars1'), ('ars', '1'))
+        self.assertEqual(p.parse('arst'), ('arst', ''))
 
 
 if __name__ == '__main__':
