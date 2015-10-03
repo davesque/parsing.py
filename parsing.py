@@ -10,7 +10,12 @@ class ImproperInputError(ParseError):
     pass
 
 
-class Take(object):
+class Parser(object):
+    def __call__(self, *args, **kwargs):
+        return self.parse(*args, **kwargs)
+
+
+class Take(Parser):
     def __init__(self, n):
         if n < 1:
             raise ValueError('Must provide integer greater than zero')
@@ -65,7 +70,10 @@ class TakeWhile(TakeIf):
             i += 1
 
 
-class TakeUntil(object):
+alpha = TakeWhile(lambda x: x.isalpha())
+
+
+class TakeUntil(Parser):
     def __init__(self, s):
         self.s = s
 
