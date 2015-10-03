@@ -1,6 +1,6 @@
 import unittest
 
-from parsing import ParsingError, Take
+from parsing import Take
 
 
 class TestTake(unittest.TestCase):
@@ -12,10 +12,14 @@ class TestTake(unittest.TestCase):
 
         self.assertEqual(p.parse(self.s), ('ars', 't'))
 
+    def test_it_should_require_a_number_greater_than_zero(self):
+        with self.assertRaises(Take.TakeError):
+            Take(0)
+
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         p = Take(10)
 
-        with self.assertRaises(ParsingError):
+        with self.assertRaises(Take.TakeError):
             self.assertEqual(p.parse(self.s), ('ars', 't'))
 
 
