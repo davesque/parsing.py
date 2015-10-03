@@ -1,3 +1,6 @@
+import operator
+
+
 class ParseError(Exception):
     pass
 
@@ -14,9 +17,20 @@ def truncate(s):
     return s[:10] + '...' if len(s) > 10 else s
 
 
+is_digit = operator.methodcaller('isdigit')
+is_alpha = operator.methodcaller('isalpha')
+is_space = operator.methodcaller('isspace')
+
+
 class Parser(object):
     def __call__(self, *args, **kwargs):
         return self.parse(*args, **kwargs)
+
+    def __and__(self, other):
+        return All(self, other)
+
+    def __or__(self, other):
+        return Any(self, other)
 
 
 class Take(Parser):
@@ -84,9 +98,9 @@ class TakeWhile(TakeIf):
             i += 1
 
 
-digits = TakeWhile(lambda x: x.isdigit())
-alphas = TakeWhile(lambda x: x.isalpha())
-spaces = TakeWhile(lambda x: x.isspace())
+digits = TakeWhile(is_digit)
+alphas = TakeWhile(is_alpha)
+spaces = TakeWhile(is_space)
 
 
 class TakeUntil(Parser):
@@ -170,10 +184,12 @@ class Accept(TakeIf):
         super(Accept, self).__init__(len(s), lambda x: x == s)
 
 
-class All(Parser):
+class Compound(Parser):
     def __init__(self, *ps):
         self.ps = ps
 
+
+class All(Compound):
     def parse(self, xs):
         result = []
 
@@ -184,8 +200,21 @@ class All(Parser):
                 x, xs = p(xs)
                 result.append(x)
         except ParseError:
-            raise ImproperInputError('String "{0}" could not be parser by compound parser'.format(
+            raise ImproperInputError('String "{0}" could not be parser by conjunctive parser'.format(
                 truncate(xs_),
             ))
 
         return (tuple(result), xs)
+
+
+class Any(Compound):
+    def parse(self, xs):
+        for p in self.ps:
+            try:
+                return p(xs)
+            except ParseError:
+                pass
+
+        raise ImproperInputError('String "{0}" could not be parsed by disjunctive parser'.format(
+            truncate(xs),
+        ))

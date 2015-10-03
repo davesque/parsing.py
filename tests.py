@@ -3,7 +3,7 @@ import unittest
 from parsing import (
     NotEnoughInputError, ImproperInputError, Take, TakeIf, TakeWhile, digits,
     alphas, spaces, TakeUntil, Token, word, TakeAll, positive_integer, Accept,
-    All,
+    All, Any,
 )
 
 
@@ -151,6 +151,22 @@ class TestAll(unittest.TestCase):
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         with self.assertRaises(ImproperInputError):
             self.p('arst = ')
+
+
+class TestAny(unittest.TestCase):
+    def setUp(self):
+        self.p = Any(
+            alphas,
+            digits,
+        )
+
+    def test_it_should_combine_parsers_to_make_a_larger_parser(self):
+        self.assertEqual(self.p('arst1234'), ('arst', '1234'))
+        self.assertEqual(self.p('1234arst'), ('1234', 'arst'))
+
+    def test_it_should_raise_an_exception_if_parsing_fails(self):
+        with self.assertRaises(ImproperInputError):
+            self.p('   arst')
 
 
 if __name__ == '__main__':
