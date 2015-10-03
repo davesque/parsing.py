@@ -1,7 +1,8 @@
 import unittest
 
 from parsing import (
-    Take, TakeIf, ParseError,
+    ParseError,
+    Take, TakeIf, TakeWhile,
 )
 
 
@@ -35,6 +36,13 @@ class TestTakeIf(unittest.TestCase):
 
         with self.assertRaises(ParseError):
             p.parse('ar12')
+
+
+class TestTakeWhile(unittest.TestCase):
+    def test_it_should_parse_input_as_long_as_the_predicate_is_true(self):
+        p = TakeWhile(lambda x: x.isalpha())
+
+        self.assertEqual(p.parse('ars1'), ('ars', '1'))
 
 
 if __name__ == '__main__':
