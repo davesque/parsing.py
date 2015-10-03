@@ -2,7 +2,8 @@ import unittest
 
 from parsing import (
     NotEnoughInputError, ImproperInputError, Take, TakeIf, TakeWhile, digits,
-    alphas, spaces, TakeUntil, Token, word, positive_integer, Accept, All,
+    alphas, spaces, TakeUntil, Token, word, TakeAll, positive_integer, Accept,
+    All,
 )
 
 
@@ -64,19 +65,6 @@ class TestTakeWhile(unittest.TestCase):
             p('')
 
 
-class TestTakeUntil(unittest.TestCase):
-    def test_it_should_parse_input_until_an_occurrence_of_the_given_string(self):
-        p = TakeUntil('arst')
-
-        self.assertEqual(p('before arst after'), ('before ', 'arst after'))
-
-    def test_it_should_raise_an_error_if_the_given_string_is_not_found(self):
-        p = TakeUntil('arst')
-
-        with self.assertRaises(ImproperInputError):
-            p('before after')
-
-
 class TestDigit(unittest.TestCase):
     def test_it_should_parse_input_chars_which_are_digits(self):
         self.assertEqual(digits('1234arst'), ('1234', 'arst'))
@@ -92,6 +80,19 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(spaces(' \t\n\rarst'), (' \t\n\r', 'arst'))
 
 
+class TestTakeUntil(unittest.TestCase):
+    def test_it_should_parse_input_until_an_occurrence_of_the_given_string(self):
+        p = TakeUntil('arst')
+
+        self.assertEqual(p('before arst after'), ('before ', 'arst after'))
+
+    def test_it_should_raise_an_error_if_the_given_string_is_not_found(self):
+        p = TakeUntil('arst')
+
+        with self.assertRaises(ImproperInputError):
+            p('before after')
+
+
 class TestToken(unittest.TestCase):
     def test_it_should_parse_using_the_given_parser_and_consume_whitespace(self):
         p = Token(alphas)
@@ -99,6 +100,18 @@ class TestToken(unittest.TestCase):
         self.assertEqual(p('arst arst'), ('arst', 'arst'))
         self.assertEqual(p('arst '), ('arst', ''))
         self.assertEqual(p('arst'), ('arst', ''))
+
+
+class TestTakeAll(unittest.TestCase):
+    def setUp(self):
+        self.p = TakeAll(word)
+
+    def test_it_should_parse_input_using_the_given_parser_until_it_fails(self):
+        self.assertEqual(self.p('arst arst arst 1234'), (('arst', 'arst', 'arst'), '1234'))
+
+    def test_it_should_raise_an_error_if_nothing_can_be_parsed(self):
+        with self.assertRaises(ImproperInputError):
+            self.p('1234 arst')
 
 
 class TestWord(unittest.TestCase):
@@ -132,8 +145,8 @@ class TestAll(unittest.TestCase):
             Token(positive_integer),
         )
 
-    def test_it_should_parse_combine_parsers_to_make_a_larger_parser(self):
-        self.assertEqual(self.p('arst = 1234'), (('arst', '=', 1234), ''))
+    def test_it_should_combine_parsers_to_make_a_larger_parser(self):
+        self.assertEqual(self.p('arst = 1234 '), (('arst', '=', 1234), ''))
 
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         with self.assertRaises(ImproperInputError):

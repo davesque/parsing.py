@@ -126,6 +126,32 @@ class Token(Parser):
 word = Token(alphas)
 
 
+class TakeAll(Parser):
+    def __init__(self, p):
+        self.p = p
+
+    def parse(self, xs):
+        result = []
+
+        i = 0
+        while True:
+            try:
+                x, xs = self.p(xs)
+            except ParseError:
+                if i == 0:
+                    raise ImproperInputError('Could not parse anything from string "{0}"'.format(
+                        truncate(xs),
+                    ))
+
+                break
+
+            result.append(x)
+
+            i += 1
+
+        return (tuple(result), xs)
+
+
 class Construct(Parser):
     def __init__(self, c, using):
         self.c = c
