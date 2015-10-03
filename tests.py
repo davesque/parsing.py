@@ -1,8 +1,8 @@
 import unittest
 
 from parsing import (
-    NotEnoughInputError, ImproperInputError,
-    Take, TakeIf, TakeWhile, alpha, space, TakeUntil, Token,
+    NotEnoughInputError, ImproperInputError, Take, TakeIf, TakeWhile, digit,
+    alpha, space, TakeUntil, Token, word, positive_integer,
 )
 
 
@@ -73,6 +73,11 @@ class TestTakeUntil(unittest.TestCase):
             p('before after')
 
 
+class TestDigit(unittest.TestCase):
+    def test_it_should_parse_input_chars_which_are_digits(self):
+        self.assertEqual(digit('1234arst'), ('1234', 'arst'))
+
+
 class TestAlpha(unittest.TestCase):
     def test_it_should_parse_input_which_is_alphabetical(self):
         self.assertEqual(alpha('arst1234'), ('arst', '1234'))
@@ -90,6 +95,18 @@ class TestToken(unittest.TestCase):
         self.assertEqual(p('arst arst'), ('arst', 'arst'))
         self.assertEqual(p('arst '), ('arst', ''))
         self.assertEqual(p('arst'), ('arst', ''))
+
+
+class TestWord(unittest.TestCase):
+    def test_it_should_parse_alphabetical_chars_and_consume_whitespace(self):
+        self.assertEqual(word('arst arst'), ('arst', 'arst'))
+        self.assertEqual(word('arst '), ('arst', ''))
+        self.assertEqual(word('arst'), ('arst', ''))
+
+
+class TestPositiveInteger(unittest.TestCase):
+    def test_it_should_parse_digits_and_return_a_number(self):
+        self.assertEqual(positive_integer('1234 arst'), (1234, ' arst'))
 
 
 if __name__ == '__main__':

@@ -70,6 +70,7 @@ class TakeWhile(TakeIf):
             i += 1
 
 
+digit = TakeWhile(lambda x: x.isdigit())
 alpha = TakeWhile(lambda x: x.isalpha())
 space = TakeWhile(lambda x: x.isspace())
 
@@ -101,3 +102,19 @@ class Token(Parser):
             pass
 
         return (x, xs)
+
+
+word = Token(alpha)
+
+
+class Construct(Parser):
+    def __init__(self, c, using):
+        self.c = c
+        self.p = using
+
+    def parse(self, xs):
+        x, xs = self.p(xs)
+
+        return (self.c(x), xs)
+
+positive_integer = Construct(int, digit)
