@@ -6,7 +6,7 @@ class NotEnoughInputError(ParseError):
     pass
 
 
-class ConditionNotMetError(ParseError):
+class ImproperInputError(ParseError):
     pass
 
 
@@ -36,7 +36,7 @@ class TakeIf(Take):
         x, xs = super(TakeIf, self).parse(xs)
 
         if not self.p(x):
-            raise ConditionNotMetError('Condition not met for parsed input')
+            raise ImproperInputError('Condition not met for parsed input')
 
         return (x, xs)
 
@@ -52,7 +52,7 @@ class TakeWhile(TakeIf):
         while True:
             try:
                 x, xs_ = super(TakeWhile, self).parse(xs)
-            except (NotEnoughInputError, ConditionNotMetError) as e:
+            except (NotEnoughInputError, ImproperInputError) as e:
                 # If no parsing can be done at all, raise an error
                 if i == 0:
                     raise e
@@ -63,3 +63,16 @@ class TakeWhile(TakeIf):
             xs = xs_
 
             i += 1
+
+
+class TakeUntil(object):
+    def __init__(self, s):
+        self.s = s
+
+    def parse(self, xs):
+        try:
+            i = xs.index(self.s)
+        except ValueError:
+            raise ImproperInputError('Substring not found in input')
+
+        return (xs[:i], xs[i:])

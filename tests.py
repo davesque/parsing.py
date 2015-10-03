@@ -1,8 +1,8 @@
 import unittest
 
 from parsing import (
-    NotEnoughInputError, ConditionNotMetError,
-    Take, TakeIf, TakeWhile,
+    NotEnoughInputError, ImproperInputError,
+    Take, TakeIf, TakeWhile, TakeUntil,
 )
 
 
@@ -34,7 +34,7 @@ class TestTakeIf(unittest.TestCase):
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         p = TakeIf(3, lambda x: x.isalpha())
 
-        with self.assertRaises(ConditionNotMetError):
+        with self.assertRaises(ImproperInputError):
             p.parse('ar12')
 
         with self.assertRaises(NotEnoughInputError):
@@ -52,12 +52,25 @@ class TestTakeWhile(unittest.TestCase):
         p = TakeWhile(lambda x: x.isalpha())
 
         # If no characters could be successfully parsed from a non-empty input
-        with self.assertRaises(ConditionNotMetError):
+        with self.assertRaises(ImproperInputError):
             p.parse('1234')
 
         # If given input is empty
         with self.assertRaises(NotEnoughInputError):
             p.parse('')
+
+
+class TestTakeUntil(unittest.TestCase):
+    def test_it_should_parse_input_until_an_occurrence_of_the_given_string(self):
+        p = TakeUntil('arst')
+
+        self.assertEqual(p.parse('before arst after'), ('before ', 'arst after'))
+
+    def test_it_should_raise_an_error_if_the_given_string_is_not_found(self):
+        p = TakeUntil('arst')
+
+        with self.assertRaises(ImproperInputError):
+            p.parse('before after')
 
 
 if __name__ == '__main__':
