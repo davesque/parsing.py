@@ -26,6 +26,10 @@ class TestTakeIf(unittest.TestCase):
 
         self.assertEqual(p.parse('arst'), ('ars', 't'))
 
+    def test_it_should_require_a_number_greater_than_zero(self):
+        with self.assertRaises(ValueError):
+            TakeIf(0, lambda x: None)
+
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         p = TakeIf(3, lambda x: x.isalpha())
 

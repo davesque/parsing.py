@@ -20,13 +20,14 @@ class Take(object):
 
 class TakeIf(Take):
     def __init__(self, n, p):
-        self.n = n
+        super(TakeIf, self).__init__(n)
+
         self.p = p
 
     def parse(self, xs):
         x, xs = super(TakeIf, self).parse(xs)
 
         if not self.p(x):
-            raise ParseError('Predicate failed')
+            raise ParseError('Condition not met for parsed input')
 
         return (x, xs)
