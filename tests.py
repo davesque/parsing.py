@@ -1,8 +1,8 @@
 import unittest
 
 from parsing import (
-    NotEnoughInputError, ImproperInputError, Take, TakeIf, TakeWhile, digit,
-    alpha, space, TakeUntil, Token, word, positive_integer, Accept,
+    NotEnoughInputError, ImproperInputError, Take, TakeIf, TakeWhile, digits,
+    alphas, spaces, TakeUntil, Token, word, positive_integer, Accept, All,
 )
 
 
@@ -22,23 +22,27 @@ class TestTake(unittest.TestCase):
 
 
 class TestTakeIf(unittest.TestCase):
-    def test_it_should_conditionally_parse_the_given_number_of_characters(self):
-        p = TakeIf(3, lambda x: x.isalpha())
+    def setUp(self):
+        self.p = TakeIf(3, lambda x: x.isalpha())
 
-        self.assertEqual(p('arst'), ('ars', 't'))
+    def test_it_should_conditionally_parse_the_given_number_of_characters(self):
+        self.assertEqual(self.p('arst'), ('ars', 't'))
+
+    def test_it_should_be_invertible(self):
+        p = ~self.p
+
+        self.assertEqual(p('1234'), ('123', '4'))
 
     def test_it_should_require_a_number_greater_than_zero(self):
         with self.assertRaises(ValueError):
             TakeIf(0, lambda x: None)
 
     def test_it_should_raise_an_exception_if_parsing_fails(self):
-        p = TakeIf(3, lambda x: x.isalpha())
-
         with self.assertRaises(ImproperInputError):
-            p('ar12')
+            self.p('ar12')
 
         with self.assertRaises(NotEnoughInputError):
-            p('ar')
+            self.p('ar')
 
 
 class TestTakeWhile(unittest.TestCase):
@@ -75,22 +79,22 @@ class TestTakeUntil(unittest.TestCase):
 
 class TestDigit(unittest.TestCase):
     def test_it_should_parse_input_chars_which_are_digits(self):
-        self.assertEqual(digit('1234arst'), ('1234', 'arst'))
+        self.assertEqual(digits('1234arst'), ('1234', 'arst'))
 
 
 class TestAlpha(unittest.TestCase):
     def test_it_should_parse_input_which_is_alphabetical(self):
-        self.assertEqual(alpha('arst1234'), ('arst', '1234'))
+        self.assertEqual(alphas('arst1234'), ('arst', '1234'))
 
 
 class TestSpace(unittest.TestCase):
     def test_it_should_parse_input_which_is_whitespace(self):
-        self.assertEqual(space(' \t\n\rarst'), (' \t\n\r', 'arst'))
+        self.assertEqual(spaces(' \t\n\rarst'), (' \t\n\r', 'arst'))
 
 
 class TestToken(unittest.TestCase):
     def test_it_should_parse_using_the_given_parser_and_consume_whitespace(self):
-        p = Token(alpha)
+        p = Token(alphas)
 
         self.assertEqual(p('arst arst'), ('arst', 'arst'))
         self.assertEqual(p('arst '), ('arst', ''))
@@ -118,6 +122,22 @@ class TestAccept(unittest.TestCase):
     def test_it_should_raise_an_error_if_parsing_fails(self):
         with self.assertRaises(ImproperInputError):
             Accept('arst').parse('ars1234')
+
+
+class TestAll(unittest.TestCase):
+    def setUp(self):
+        self.p = All(
+            word,
+            Token(Accept('=')),
+            Token(positive_integer),
+        )
+
+    def test_it_should_parse_combine_parsers_to_make_a_larger_parser(self):
+        self.assertEqual(self.p('arst = 1234'), (('arst', '=', 1234), ''))
+
+    def test_it_should_raise_an_exception_if_parsing_fails(self):
+        with self.assertRaises(ImproperInputError):
+            self.p('arst = ')
 
 
 if __name__ == '__main__':

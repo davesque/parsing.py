@@ -10,6 +10,10 @@ class ImproperInputError(ParseError):
     pass
 
 
+def truncate(s):
+    return s[:10] + '...' if len(s) > 10 else s
+
+
 class Parser(object):
     def __call__(self, *args, **kwargs):
         return self.parse(*args, **kwargs)
@@ -26,7 +30,10 @@ class Take(Parser):
         n = self.n
 
         if n > len(xs):
-            raise NotEnoughInputError('Not enough input to parse')
+            raise NotEnoughInputError('Expected at least {0} char(s) in string "{1}"'.format(
+                n,
+                truncate(xs),
+            ))
 
         return (xs[:n], xs[n:])
 
@@ -41,9 +48,16 @@ class TakeIf(Take):
         x, xs = super(TakeIf, self).parse(xs)
 
         if not self.f(x):
-            raise ImproperInputError('Condition not met for parsed input')
+            raise ImproperInputError('Condition not met for "{0}" parsed from "{1}"'.format(
+                truncate(x),
+                truncate(xs),
+            ))
 
         return (x, xs)
+
+    def __invert__(self):
+        n, f = self.n, self.f
+        return type(self)(n, lambda x: not f(x))
 
 
 class TakeWhile(TakeIf):
@@ -70,9 +84,9 @@ class TakeWhile(TakeIf):
             i += 1
 
 
-digit = TakeWhile(lambda x: x.isdigit())
-alpha = TakeWhile(lambda x: x.isalpha())
-space = TakeWhile(lambda x: x.isspace())
+digits = TakeWhile(lambda x: x.isdigit())
+alphas = TakeWhile(lambda x: x.isalpha())
+spaces = TakeWhile(lambda x: x.isspace())
 
 
 class TakeUntil(Parser):
@@ -80,16 +94,21 @@ class TakeUntil(Parser):
         self.s = s
 
     def parse(self, xs):
+        s = self.s
+
         try:
-            i = xs.index(self.s)
+            i = xs.index(s)
         except ValueError:
-            raise ImproperInputError('Substring not found in input')
+            raise ImproperInputError('Substring "{0}" not found in string "{1}"'.format(
+                truncate(s),
+                truncate(xs),
+            ))
 
         return (xs[:i], xs[i:])
 
 
 class Token(Parser):
-    def __init__(self, p, separation_parser=space):
+    def __init__(self, p, separation_parser=spaces):
         self.p = p
         self.s = separation_parser
 
@@ -104,7 +123,7 @@ class Token(Parser):
         return (x, xs)
 
 
-word = Token(alpha)
+word = Token(alphas)
 
 
 class Construct(Parser):
@@ -117,9 +136,30 @@ class Construct(Parser):
 
         return (self.c(x), xs)
 
-positive_integer = Construct(int, digit)
+positive_integer = Construct(int, digits)
 
 
 class Accept(TakeIf):
     def __init__(self, s):
         super(Accept, self).__init__(len(s), lambda x: x == s)
+
+
+class All(Parser):
+    def __init__(self, *ps):
+        self.ps = ps
+
+    def parse(self, xs):
+        result = []
+
+        xs_ = xs
+
+        try:
+            for p in self.ps:
+                x, xs = p(xs)
+                result.append(x)
+        except ParseError:
+            raise ImproperInputError('String "{0}" could not be parser by compound parser'.format(
+                truncate(xs_),
+            ))
+
+        return (tuple(result), xs)
