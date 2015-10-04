@@ -7,14 +7,18 @@ class Parser(object):
         return self.parse(*args, **kwargs)
 
     def __and__(self, other):
-        return All(self, other)
+        return Sequence(self, other)
 
     def __or__(self, other):
-        return Any(self, other)
+        return Alternatives(self, other)
 
 
 class Take(Parser):
+    """
+    Constructs a parser which takes ``n`` items.
+    """
     def __init__(self, n):
+        # n must be positive
         if n < 1:
             raise ValueError('Must provide integer greater than zero')
 
@@ -23,6 +27,7 @@ class Take(Parser):
     def parse(self, xs):
         n = self.n
 
+        # If sequence not long enough, raise
         if n > len(xs):
             raise NotEnoughInputError('Expected at least {0} char(s) in string "{1}"'.format(
                 n,
@@ -33,6 +38,10 @@ class Take(Parser):
 
 
 class TakeIf(Take):
+    """
+    Constructs a parser which takes ``n`` items if the given predicate ``f``
+    returns ``True`` for the parsed items.
+    """
     def __init__(self, n, f):
         super(TakeIf, self).__init__(n)
 
@@ -55,6 +64,10 @@ class TakeIf(Take):
 
 
 class TakeWhile(TakeIf):
+    """
+    Constructs a parser which takes items as long as the given predicate ``f``
+    returns ``True`` for the parsed items.
+    """
     def __init__(self, f):
         super(TakeWhile, self).__init__(1, f)
 
@@ -65,7 +78,7 @@ class TakeWhile(TakeIf):
         while True:
             try:
                 x, xs_ = super(TakeWhile, self).parse(xs)
-            except (NotEnoughInputError, ImproperInputError) as e:
+            except ParseError as e:
                 # If no parsing can be done at all, raise an error
                 if i == 0:
                     raise e
@@ -84,6 +97,10 @@ spaces = TakeWhile(is_space)
 
 
 class TakeUntil(Parser):
+    """
+    Constructs a parser which takes items up to the first occurrence of the
+    substring ``s``.
+    """
     def __init__(self, s):
         self.s = s
 
@@ -102,6 +119,11 @@ class TakeUntil(Parser):
 
 
 class Token(Parser):
+    """
+    Augments the given parser ``p`` to expect and consume whitespace after any
+    items successfully parsed by ``p``.  The parser ``separation_parser`` can
+    be provided to customize whitespace parsing behavior.
+    """
     def __init__(self, p, separation_parser=spaces):
         self.p = p
         self.s = separation_parser
@@ -121,6 +143,11 @@ word = Token(alphas)
 
 
 class TakeAll(Parser):
+    """
+    Augements the given parser ``p`` to continue applying itself to the input
+    as long as parsing with ``p`` succeeds.  If no input can be parsed at all
+    with ``p``, raises an exception.
+    """
     def __init__(self, p):
         self.p = p
 
@@ -146,32 +173,12 @@ class TakeAll(Parser):
         return (tuple(result), xs)
 
 
-class Construct(Parser):
-    def __init__(self, c, p):
-        self.c = c
-        self.p = p
-
-    def parse(self, xs):
-        x, xs = self.p(xs)
-
-        if type(x) in (list, tuple):
-            constructed = self.c(*x)
-        else:
-            constructed = self.c(x)
-
-        return (constructed, xs)
-
-positive_integer = Construct(int, digits)
-
-
 class Accept(TakeIf):
+    """
+    Constructs a parser which parses the given string ``s``.
+    """
     def __init__(self, s):
         super(Accept, self).__init__(len(s), lambda x: x == s)
-
-
-class Compound(Parser):
-    def __init__(self, *ps):
-        self.ps = ps
 
 
 class Discardable(object):
@@ -186,6 +193,11 @@ class Discardable(object):
 
 
 class Discard(Parser):
+    """
+    Augments the given parser ``p`` to return a discardable value when parsing
+    succeeds.  Discardable values are not included in the results of compound
+    ``Sequence`` parsers.
+    """
     def __init__(self, p):
         self.p = p
 
@@ -195,6 +207,10 @@ class Discard(Parser):
 
 
 class Optional(Parser):
+    """
+    Augments the given parser ``p`` to return a discardable ``None`` value
+    instead of raising an exception when parsing fails.
+    """
     def __init__(self, p):
         self.p = p
 
@@ -205,7 +221,17 @@ class Optional(Parser):
             return (Discardable(None), xs)
 
 
-class All(Compound):
+class Compound(Parser):
+    def __init__(self, *ps):
+        self.ps = ps
+
+
+class Sequence(Compound):
+    """
+    Constructs a compound parser with the given parsers ``ps``.  The compound
+    parser will return the results of all parsers in ``ps`` as a flattened
+    tuple.  It fails if any parser in ``ps`` fails.
+    """
     def parse(self, xs):
         result = []
 
@@ -219,14 +245,19 @@ class All(Compound):
                     result.append(x)
 
         except ParseError:
-            raise ImproperInputError('String "{0}" could not be parsed by conjunctive parser'.format(
+            raise ImproperInputError('Sequence not found in string "{0}"'.format(
                 truncate(xs_),
             ))
 
         return (tuple(flatten(result)), xs)
 
 
-class Any(Compound):
+class Alternatives(Compound):
+    """
+    Constructs a compound parser with the given parsers ``ps``.  The compound
+    parser will return the result of the first parser in ``ps`` which parses
+    the input successfully.  It fails if no parsers in ``ps`` succeed.
+    """
     def parse(self, xs):
         for p in self.ps:
             try:
@@ -234,6 +265,28 @@ class Any(Compound):
             except ParseError:
                 pass
 
-        raise ImproperInputError('String "{0}" could not be parsed by disjunctive parser'.format(
+        raise ImproperInputError('No alternatives found in string "{0}"'.format(
             truncate(xs),
         ))
+
+
+class Map(Parser):
+    """
+    Augments the given parser ``p`` to apply the given function ``f`` to its
+    result before returning it.
+    """
+    def __init__(self, f, p):
+        self.f = f
+        self.p = p
+
+    def parse(self, xs):
+        x, xs = self.p(xs)
+
+        if isinstance(x, (list, tuple)):
+            x = self.f(*x)
+        else:
+            x = self.f(x)
+
+        return (x, xs)
+
+positive_integer = Map(int, digits)

@@ -3,8 +3,8 @@ import unittest
 from .exceptions import NotEnoughInputError, ImproperInputError
 from .parsers import (
     Take, TakeIf, TakeWhile, digits, alphas, spaces, TakeUntil, Token, word,
-    TakeAll, Construct, positive_integer, Accept, Discardable, Discard, All,
-    Optional, Any,
+    TakeAll, Map, positive_integer, Accept, Discardable, Discard, Sequence,
+    Optional, Alternatives,
 )
 from .utils import compose, flatten
 
@@ -192,7 +192,7 @@ class TestAccept(unittest.TestCase):
 
 class TestAll(unittest.TestCase):
     def setUp(self):
-        self.p = All(
+        self.p = Sequence(
             word,
             Token(Accept('=')),
             Token(positive_integer),
@@ -227,16 +227,16 @@ class TestConstruct(unittest.TestCase):
             self.value = value
 
     def setUp(self):
-        self.p1 = Construct(
+        self.p1 = Map(
             self.Statement,
-            All(
+            Sequence(
                 word,
                 Discard(Token(Accept('='))),
                 positive_integer,
             ),
         )
 
-        self.p2 = Construct(
+        self.p2 = Map(
             lambda *args: float(''.join(args)),
             digits & Optional(Accept('.') & digits),
         )
@@ -260,7 +260,7 @@ class TestConstruct(unittest.TestCase):
 
 class TestAny(unittest.TestCase):
     def setUp(self):
-        self.p = Any(
+        self.p = Alternatives(
             alphas,
             digits,
         )
@@ -276,7 +276,7 @@ class TestAny(unittest.TestCase):
 
 class TestDiscard(unittest.TestCase):
     def setUp(self):
-        self.p = All(
+        self.p = Sequence(
             word,
             compose(Discard, Token, Accept)('='),
             Token(positive_integer),
