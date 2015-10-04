@@ -29,6 +29,18 @@ def compose(*fs):
     return composed
 
 
+def flatten(lst):
+    flattened = []
+
+    for i in lst:
+        if type(i) in (tuple, list):
+            flattened.extend(flatten(i))
+        else:
+            flattened.append(i)
+
+    return flattened
+
+
 class Parser(object):
     def __call__(self, *args, **kwargs):
         return self.parse(*args, **kwargs)
@@ -174,14 +186,19 @@ class TakeAll(Parser):
 
 
 class Construct(Parser):
-    def __init__(self, c, using):
+    def __init__(self, c, p):
         self.c = c
-        self.p = using
+        self.p = p
 
     def parse(self, xs):
         x, xs = self.p(xs)
 
-        return (self.c(x), xs)
+        if type(x) in (list, tuple):
+            constructed = self.c(*x)
+        else:
+            constructed = self.c(x)
+
+        return (constructed, xs)
 
 positive_integer = Construct(int, digits)
 
@@ -196,8 +213,15 @@ class Compound(Parser):
         self.ps = ps
 
 
-class Discarded(object):
-    pass
+class Discardable(object):
+    def __init__(self, result):
+        self.result = result
+
+    def __eq__(self, other):
+        return (
+            (self.result is None and other.result is None) or
+            (self.result == other.result)
+        )
 
 
 class Discard(Parser):
@@ -205,8 +229,19 @@ class Discard(Parser):
         self.p = p
 
     def parse(self, xs):
-        _, xs = self.p(xs)
-        return (Discarded(), xs)
+        x, xs = self.p(xs)
+        return (Discardable(x), xs)
+
+
+class Optional(Parser):
+    def __init__(self, p):
+        self.p = p
+
+    def parse(self, xs):
+        try:
+            return self.p(xs)
+        except ParseError:
+            return (Discardable(None), xs)
 
 
 class All(Compound):
@@ -219,7 +254,7 @@ class All(Compound):
             for p in self.ps:
                 x, xs = p(xs)
 
-                if not isinstance(x, Discarded):
+                if not isinstance(x, Discardable):
                     result.append(x)
 
         except ParseError:
@@ -227,7 +262,7 @@ class All(Compound):
                 truncate(xs_),
             ))
 
-        return (tuple(result), xs)
+        return (tuple(flatten(result)), xs)
 
 
 class Any(Compound):

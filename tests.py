@@ -3,8 +3,8 @@ import unittest
 from parsing import (
     compose,
     NotEnoughInputError, ImproperInputError, Take, TakeIf, TakeWhile, digits,
-    alphas, spaces, TakeUntil, Token, word, TakeAll, positive_integer, Accept,
-    Discard, All, Any,
+    alphas, spaces, TakeUntil, Token, word, TakeAll, Construct, positive_integer, Accept,
+    Discardable, Discard, All, Optional, Any,
 )
 
 
@@ -190,6 +190,49 @@ class TestAll(unittest.TestCase):
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         with self.assertRaises(ImproperInputError):
             self.p('arst = ')
+
+
+class TestOptional(unittest.TestCase):
+    def test_it_should_make_a_parser_optional(self):
+        p1 = compose(Optional, Accept)('a')
+
+        self.assertEqual(p1('arst'), ('a', 'rst'))
+        self.assertEqual(p1('rst'), (Discardable(None), 'rst'))
+
+        p2 = digits & Optional(Accept('.') & digits)
+
+        self.assertEqual(p2('1234'), (('1234',), ''))
+        self.assertEqual(p2('1234.'), (('1234',), '.'))
+        self.assertEqual(p2('1234.1234'), (('1234', '.', '1234'), ''))
+
+
+class TestConstruct(unittest.TestCase):
+    class Statement(object):
+        def __init__(self, label, value):
+            self.label = label
+            self.value = value
+
+    def setUp(self):
+        self.p1 = Construct(
+            self.Statement,
+            All(
+                word,
+                Discard(Token(Accept('='))),
+                positive_integer,
+            ),
+        )
+
+        self.p2 = Construct(
+            lambda *args: float(''.join(args)),
+            digits & Optional(Accept('.') & digits),
+        )
+
+    def test_it_should_use_parser_results_to_construct_a_new_object(self):
+        x, xs = self.p1('arst = 1234')
+
+        self.assertIsInstance(x, self.Statement)
+        self.assertEqual(x.label, 'arst')
+        self.assertEqual(x.value, 1234)
 
 
 class TestAny(unittest.TestCase):
