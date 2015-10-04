@@ -1,9 +1,10 @@
 import unittest
 
+from .basic import digits, alphas, spaces, positive_integer
 from .exceptions import NotEnoughInputError, ImproperInputError
 from .parsers import (
-    Take, TakeIf, TakeWhile, digits, alphas, spaces, TakeUntil, Token, word,
-    TakeAll, Apply, positive_integer, Accept, Discardable, Discard, Sequence,
+    Take, TakeIf, TakeWhile, TakeUntil, Token,
+    TakeAll, Apply, Accept, Discardable, Discard, Sequence,
     Optional, Alternatives,
 )
 from .utils import compose, flatten, truncate
@@ -165,7 +166,7 @@ class TestToken(unittest.TestCase):
 
 class TestTakeAll(unittest.TestCase):
     def setUp(self):
-        self.p = TakeAll(word)
+        self.p = TakeAll(Token(alphas))
 
     def test_it_should_parse_input_using_the_given_parser_until_it_fails(self):
         self.assertEqual(self.p('arst arst arst 1234'), (('arst', 'arst', 'arst'), '1234'))
@@ -173,13 +174,6 @@ class TestTakeAll(unittest.TestCase):
     def test_it_should_raise_an_error_if_nothing_can_be_parsed(self):
         with self.assertRaises(ImproperInputError):
             self.p('1234 arst')
-
-
-class TestWord(unittest.TestCase):
-    def test_it_should_parse_alphabetical_chars_and_consume_whitespace(self):
-        self.assertEqual(word('arst arst'), ('arst', 'arst'))
-        self.assertEqual(word('arst '), ('arst', ''))
-        self.assertEqual(word('arst'), ('arst', ''))
 
 
 class TestPositiveInteger(unittest.TestCase):
@@ -201,7 +195,7 @@ class TestAccept(unittest.TestCase):
 class TestSequence(unittest.TestCase):
     def setUp(self):
         self.p = Sequence(
-            word,
+            Token(alphas),
             Token(Accept('=')),
             Token(positive_integer),
         )
@@ -238,7 +232,7 @@ class TestApply(unittest.TestCase):
         self.p1 = Apply(
             self.Statement,
             Sequence(
-                word,
+                Token(alphas),
                 Discard(Token(Accept('='))),
                 positive_integer,
             ),
@@ -285,7 +279,7 @@ class TestAlternatives(unittest.TestCase):
 class TestDiscard(unittest.TestCase):
     def setUp(self):
         self.p = Sequence(
-            word,
+            Token(alphas),
             compose(Discard, Token, Accept)('='),
             Token(positive_integer),
         )

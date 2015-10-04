@@ -1,5 +1,5 @@
 from .exceptions import ParseError, NotEnoughInputError, ImproperInputError
-from .utils import truncate, flatten, is_digit, is_alpha, is_space
+from .utils import truncate, flatten
 
 
 class Parser(object):
@@ -91,11 +91,6 @@ class TakeWhile(TakeIf):
             i += 1
 
 
-digits = TakeWhile(is_digit)
-alphas = TakeWhile(is_alpha)
-spaces = TakeWhile(is_space)
-
-
 class TakeUntil(Parser):
     """
     Constructs a parser which takes items up to the first occurrence of the
@@ -124,9 +119,14 @@ class Token(Parser):
     items successfully parsed by ``p``.  The parser ``separation_parser`` can
     be provided to customize whitespace parsing behavior.
     """
-    def __init__(self, p, separation_parser=spaces):
+    def __init__(self, p, separation_parser=None):
         self.p = p
-        self.s = separation_parser
+
+        if separation_parser:
+            self.s = separation_parser
+        else:
+            from .basic import spaces
+            self.s = spaces
 
     def parse(self, xs):
         x, xs = self.p(xs)
@@ -137,9 +137,6 @@ class Token(Parser):
             pass
 
         return (x, xs)
-
-
-word = Token(alphas)
 
 
 class TakeAll(Parser):
@@ -289,5 +286,3 @@ class Apply(Parser):
             x = self.f(x)
 
         return (x, xs)
-
-positive_integer = Apply(int, digits)
