@@ -1,10 +1,24 @@
 import unittest
 
 from parsing import (
+    compose,
     NotEnoughInputError, ImproperInputError, Take, TakeIf, TakeWhile, digits,
     alphas, spaces, TakeUntil, Token, word, TakeAll, positive_integer, Accept,
     All, Any,
 )
+
+
+class TestCompose(unittest.TestCase):
+    def test_it_should_compose_the_given_functions(self):
+        f = compose(
+            lambda x: x + 1,
+            lambda x: x * 2,
+            lambda x: x ** 3,
+        )
+
+        self.assertEqual(f(1), 3)
+        self.assertEqual(f(2), 17)
+        self.assertEqual(f(3), 55)
 
 
 class TestParserBuilding(unittest.TestCase):

@@ -22,6 +22,13 @@ is_alpha = operator.methodcaller('isalpha')
 is_space = operator.methodcaller('isspace')
 
 
+def compose(*fs):
+    def composed(x):
+        return reduce(lambda x, f: f(x), reversed(fs), x)
+
+    return composed
+
+
 class Parser(object):
     def __call__(self, *args, **kwargs):
         return self.parse(*args, **kwargs)
