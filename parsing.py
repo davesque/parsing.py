@@ -258,7 +258,7 @@ class All(Compound):
                     result.append(x)
 
         except ParseError:
-            raise ImproperInputError('String "{0}" could not be parser by conjunctive parser'.format(
+            raise ImproperInputError('String "{0}" could not be parsed by conjunctive parser'.format(
                 truncate(xs_),
             ))
 
