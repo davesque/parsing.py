@@ -4,7 +4,7 @@ from parsing import (
     compose,
     NotEnoughInputError, ImproperInputError, Take, TakeIf, TakeWhile, digits,
     alphas, spaces, TakeUntil, Token, word, TakeAll, positive_integer, Accept,
-    All, Any,
+    Discard, All, Any,
 )
 
 
@@ -206,6 +206,18 @@ class TestAny(unittest.TestCase):
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         with self.assertRaises(ImproperInputError):
             self.p('   arst')
+
+
+class TestDiscard(unittest.TestCase):
+    def setUp(self):
+        self.p = All(
+            word,
+            compose(Discard, Token, Accept)('='),
+            Token(positive_integer),
+        )
+
+    def test_it_should_allow_combined_parsers_to_discard_certain_values_in_the_result_tuple(self):
+        self.assertEqual(self.p('arst = 1234 '), (('arst', 1234), ''))
 
 
 if __name__ == '__main__':

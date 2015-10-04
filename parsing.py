@@ -196,6 +196,19 @@ class Compound(Parser):
         self.ps = ps
 
 
+class Discarded(object):
+    pass
+
+
+class Discard(Parser):
+    def __init__(self, p):
+        self.p = p
+
+    def parse(self, xs):
+        _, xs = self.p(xs)
+        return (Discarded(), xs)
+
+
 class All(Compound):
     def parse(self, xs):
         result = []
@@ -205,7 +218,10 @@ class All(Compound):
         try:
             for p in self.ps:
                 x, xs = p(xs)
-                result.append(x)
+
+                if not isinstance(x, Discarded):
+                    result.append(x)
+
         except ParseError:
             raise ImproperInputError('String "{0}" could not be parser by conjunctive parser'.format(
                 truncate(xs_),
