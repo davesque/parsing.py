@@ -3,10 +3,18 @@ import unittest
 from .exceptions import NotEnoughInputError, ImproperInputError
 from .parsers import (
     Take, TakeIf, TakeWhile, digits, alphas, spaces, TakeUntil, Token, word,
-    TakeAll, Map, positive_integer, Accept, Discardable, Discard, Sequence,
+    TakeAll, Apply, positive_integer, Accept, Discardable, Discard, Sequence,
     Optional, Alternatives,
 )
-from .utils import compose, flatten
+from .utils import compose, flatten, truncate
+
+
+class TestTruncate(unittest.TestCase):
+    def test_it_should_truncate_a_string(self):
+        self.assertEqual(truncate('arst'), 'arst')
+        self.assertEqual(truncate('arstarstar'), 'arstarstar')
+        self.assertEqual(truncate('arstarstars'), 'arstarstar...')
+        self.assertEqual(truncate('arstarstarstarstarstarstarstarst'), 'arstarstar...')
 
 
 class TestCompose(unittest.TestCase):
@@ -118,17 +126,17 @@ class TestTakeWhile(unittest.TestCase):
             p('')
 
 
-class TestDigit(unittest.TestCase):
+class TestDigits(unittest.TestCase):
     def test_it_should_parse_input_chars_which_are_digits(self):
         self.assertEqual(digits('1234arst'), ('1234', 'arst'))
 
 
-class TestAlpha(unittest.TestCase):
+class TestAlphas(unittest.TestCase):
     def test_it_should_parse_input_which_is_alphabetical(self):
         self.assertEqual(alphas('arst1234'), ('arst', '1234'))
 
 
-class TestSpace(unittest.TestCase):
+class TestSpaces(unittest.TestCase):
     def test_it_should_parse_input_which_is_whitespace(self):
         self.assertEqual(spaces(' \t\n\rarst'), (' \t\n\r', 'arst'))
 
@@ -190,7 +198,7 @@ class TestAccept(unittest.TestCase):
             Accept('arst').parse('ars1234')
 
 
-class TestAll(unittest.TestCase):
+class TestSequence(unittest.TestCase):
     def setUp(self):
         self.p = Sequence(
             word,
@@ -220,14 +228,14 @@ class TestOptional(unittest.TestCase):
         self.assertEqual(p2('1234.1234'), (('1234', '.', '1234'), ''))
 
 
-class TestConstruct(unittest.TestCase):
+class TestApply(unittest.TestCase):
     class Statement(object):
         def __init__(self, label, value):
             self.label = label
             self.value = value
 
     def setUp(self):
-        self.p1 = Map(
+        self.p1 = Apply(
             self.Statement,
             Sequence(
                 word,
@@ -236,12 +244,12 @@ class TestConstruct(unittest.TestCase):
             ),
         )
 
-        self.p2 = Map(
+        self.p2 = Apply(
             lambda *args: float(''.join(args)),
             digits & Optional(Accept('.') & digits),
         )
 
-    def test_it_should_use_parser_results_to_construct_a_new_object(self):
+    def test_it_should_apply_a_function_to_parser_results(self):
         x, xs = self.p1('arst = 1234')
 
         self.assertIsInstance(x, self.Statement)
@@ -258,7 +266,7 @@ class TestConstruct(unittest.TestCase):
         self.assertEqual(x, 1234.1234)
 
 
-class TestAny(unittest.TestCase):
+class TestAlternatives(unittest.TestCase):
     def setUp(self):
         self.p = Alternatives(
             alphas,

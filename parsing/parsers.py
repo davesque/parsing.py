@@ -241,6 +241,7 @@ class Sequence(Compound):
             for p in self.ps:
                 x, xs = p(xs)
 
+                # Don't include result if discardable
                 if not isinstance(x, Discardable):
                     result.append(x)
 
@@ -270,7 +271,7 @@ class Alternatives(Compound):
         ))
 
 
-class Map(Parser):
+class Apply(Parser):
     """
     Augments the given parser ``p`` to apply the given function ``f`` to its
     result before returning it.
@@ -289,4 +290,4 @@ class Map(Parser):
 
         return (x, xs)
 
-positive_integer = Map(int, digits)
+positive_integer = Apply(int, digits)
