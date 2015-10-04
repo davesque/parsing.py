@@ -1,44 +1,5 @@
-import operator
-
 from .exceptions import ParseError, NotEnoughInputError, ImproperInputError
-
-
-def truncate(s):
-    return s[:10] + '...' if len(s) > 10 else s
-
-
-is_digit = operator.methodcaller('isdigit')
-is_alpha = operator.methodcaller('isalpha')
-is_space = operator.methodcaller('isspace')
-
-
-def compose(*fs):
-    def composed(x):
-        return reduce(lambda x, f: f(x), reversed(fs), x)
-
-    return composed
-
-
-def flatten(lst):
-    flattened = []
-
-    for i in lst:
-        if type(i) in (tuple, list):
-            flattened.extend(flatten(i))
-        else:
-            flattened.append(i)
-
-    return flattened
-
-
-def flatten_(seq, types=(list, tuple)):
-    seq = list(seq)
-
-    for i, x in enumerate(seq):
-        while isinstance(seq[i], types):
-            seq[i:i + 1] = seq[i]
-
-    return seq
+from .utils import truncate, flatten, is_digit, is_alpha, is_space
 
 
 class Parser(object):

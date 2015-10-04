@@ -1,11 +1,12 @@
 import unittest
 
-from .parsing import (
-    compose, flatten,
-    NotEnoughInputError, ImproperInputError, Take, TakeIf, TakeWhile, digits,
-    alphas, spaces, TakeUntil, Token, word, TakeAll, Construct, positive_integer, Accept,
-    Discardable, Discard, All, Optional, Any,
+from .exceptions import NotEnoughInputError, ImproperInputError
+from .parsers import (
+    Take, TakeIf, TakeWhile, digits, alphas, spaces, TakeUntil, Token, word,
+    TakeAll, Construct, positive_integer, Accept, Discardable, Discard, All,
+    Optional, Any,
 )
+from .utils import compose, flatten
 
 
 class TestCompose(unittest.TestCase):
