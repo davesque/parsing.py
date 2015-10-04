@@ -194,7 +194,7 @@ class TestAll(unittest.TestCase):
 
 class TestOptional(unittest.TestCase):
     def test_it_should_make_a_parser_optional(self):
-        p1 = compose(Optional, Accept)('a')
+        p1 = Optional(Accept('a'))
 
         self.assertEqual(p1('arst'), ('a', 'rst'))
         self.assertEqual(p1('rst'), (Discardable(None), 'rst'))
@@ -233,6 +233,15 @@ class TestConstruct(unittest.TestCase):
         self.assertIsInstance(x, self.Statement)
         self.assertEqual(x.label, 'arst')
         self.assertEqual(x.value, 1234)
+
+        x, xs = self.p2('1234')
+        self.assertEqual(x, 1234.)
+
+        x, xs = self.p2('1234.')
+        self.assertEqual(x, 1234.)
+
+        x, xs = self.p2('1234.1234')
+        self.assertEqual(x, 1234.1234)
 
 
 class TestAny(unittest.TestCase):
