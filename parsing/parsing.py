@@ -1,16 +1,6 @@
 import operator
 
-
-class ParseError(Exception):
-    pass
-
-
-class NotEnoughInputError(ParseError):
-    pass
-
-
-class ImproperInputError(ParseError):
-    pass
+from .exceptions import ParseError, NotEnoughInputError, ImproperInputError
 
 
 def truncate(s):
@@ -39,6 +29,16 @@ def flatten(lst):
             flattened.append(i)
 
     return flattened
+
+
+def flatten_(seq, types=(list, tuple)):
+    seq = list(seq)
+
+    for i, x in enumerate(seq):
+        while isinstance(seq[i], types):
+            seq[i:i + 1] = seq[i]
+
+    return seq
 
 
 class Parser(object):

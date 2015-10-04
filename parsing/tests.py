@@ -1,7 +1,7 @@
 import unittest
 
-from parsing import (
-    compose,
+from .parsing import (
+    compose, flatten,
     NotEnoughInputError, ImproperInputError, Take, TakeIf, TakeWhile, digits,
     alphas, spaces, TakeUntil, Token, word, TakeAll, Construct, positive_integer, Accept,
     Discardable, Discard, All, Optional, Any,
@@ -21,17 +21,30 @@ class TestCompose(unittest.TestCase):
         self.assertEqual(f(3), 55)
 
 
+class TestFlatten(unittest.TestCase):
+    def test_it_should_flatten_the_given_arbitrarily_nested_list(self):
+        self.assertEqual(
+            flatten([1, 2, [3, 4, [5, 6]]]),
+            [1, 2, 3, 4, 5, 6],
+        )
+
+        heavily_nested = reduce(lambda a, i: (a, i), range(100))
+        self.assertEqual(
+            flatten(heavily_nested),
+            list(range(100)),
+        )
+
+
 class TestParserBuilding(unittest.TestCase):
     def test_it_should_allow_building_of_parser_with_bitwise_operations(self):
         p1 = alphas & digits
-        p2 = alphas | digits
-
         self.assertEqual(p1('arst1234'), (('arst', '1234'), ''))
+
+        p2 = alphas | digits
         self.assertEqual(p2('arst1234'), ('arst', '1234'))
         self.assertEqual(p2('1234arst'), ('1234', 'arst'))
 
         p3 = positive_integer | (alphas & (digits | spaces))
-
         self.assertEqual(
             p3('1234arst1234    '),
             (1234, 'arst1234    '),
