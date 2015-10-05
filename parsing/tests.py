@@ -247,7 +247,10 @@ class TestOptional(unittest.TestCase):
         self.assertEqual(p1('arst'), ('a', 'rst'))
         self.assertEqual(p1('rst'), (Discardable(None), 'rst'))
 
-        p2 = Apply(compose(tuple, flatten), digits & Optional(Literal('.') & digits))
+        p2 = Apply(
+            compose(tuple, flatten),
+            digits & Optional(Literal('.') & digits),
+        )
 
         self.assertEqual(p2('1234'), (('1234',), ''))
         self.assertEqual(p2('1234.'), (('1234',), '.'))
