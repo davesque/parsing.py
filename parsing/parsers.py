@@ -13,7 +13,7 @@ class Parser(object):
         return Alternatives(self, other)
 
 
-class Take(Parser):
+class TakeChars(Parser):
     """
     Constructs a parser which takes ``n`` items.
     """
@@ -37,18 +37,53 @@ class Take(Parser):
         return (xs[:n], xs[n:])
 
 
-class TakeIf(Take):
+class TakeUntil(Parser):
     """
-    Constructs a parser which takes ``n`` items if the given predicate ``f``
-    returns ``True`` for the parsed items.
+    Constructs a parser which takes items until the given parser ``p``
+    succeeds.
     """
-    def __init__(self, n, f):
-        super(TakeIf, self).__init__(n)
+    move = TakeChars(1)
 
+    def __init__(self, p):
+        self.p = p
+
+    def parse(self, xs):
+        xs_ = xs
+
+        result = []
+        i = 0
+        while True:
+            try:
+                _, _ = self.p(xs)
+                break
+            except ParseError:
+                pass
+
+            try:
+                x, xs = self.move(xs)
+                result.append(x)
+            except NotEnoughInputError:
+                raise ImproperInputError('Terminal parser never succeeded in string "{0}"'.format(
+                    truncate(xs_),
+                ))
+
+            i += 1
+
+        if i == 0:
+            raise ImproperInputError('No content captured before terminal parser succeeded in string "{0}"'.format(
+                truncate(xs_),
+            ))
+
+        return (''.join(result), xs)
+
+
+class TakeIf(Parser):
+    def __init__(self, p, f):
+        self.p = p
         self.f = f
 
     def parse(self, xs):
-        x, xs = super(TakeIf, self).parse(xs)
+        x, xs = self.p(xs)
 
         if not self.f(x):
             raise ImproperInputError('Condition not met for "{0}" parsed from "{1}"'.format(
@@ -59,11 +94,19 @@ class TakeIf(Take):
         return (x, xs)
 
     def __invert__(self):
-        n, f = self.n, self.f
-        return type(self)(n, lambda x: not f(x))
+        return TakeIf(self.p, lambda x: not self.f(x))
 
 
-class TakeWhile(TakeIf):
+class TakeCharsIf(TakeIf):
+    """
+    Constructs a parser which takes ``n`` items if the given predicate ``f``
+    returns ``True`` for the parsed items.
+    """
+    def __init__(self, n, f):
+        super(TakeCharsIf, self).__init__(TakeChars(n), f)
+
+
+class TakeWhile(TakeCharsIf):
     """
     Constructs a parser which takes items as long as the given predicate ``f``
     returns ``True`` for the parsed items.
@@ -89,28 +132,6 @@ class TakeWhile(TakeIf):
             xs = xs_
 
             i += 1
-
-
-class TakeUntil(Parser):
-    """
-    Constructs a parser which takes items up to the first occurrence of the
-    substring ``s``.
-    """
-    def __init__(self, s):
-        self.s = s
-
-    def parse(self, xs):
-        s = self.s
-
-        try:
-            i = xs.index(s)
-        except ValueError:
-            raise ImproperInputError('Substring "{0}" not found in string "{1}"'.format(
-                truncate(s),
-                truncate(xs),
-            ))
-
-        return (xs[:i], xs[i:])
 
 
 class Token(Parser):
@@ -170,12 +191,12 @@ class TakeAll(Parser):
         return (tuple(result), xs)
 
 
-class Accept(TakeIf):
+class Literal(TakeCharsIf):
     """
     Constructs a parser which parses the given string ``s``.
     """
     def __init__(self, s):
-        super(Accept, self).__init__(len(s), lambda x: x == s)
+        super(Literal, self).__init__(len(s), lambda x: x == s)
 
 
 class Discardable(object):

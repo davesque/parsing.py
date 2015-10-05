@@ -3,11 +3,11 @@ import unittest
 from .basic import digits, alphas, spaces, positive_integer
 from .exceptions import NotEnoughInputError, ImproperInputError
 from .parsers import (
-    Take, TakeIf, TakeWhile, TakeUntil, Token,
-    TakeAll, Apply, Accept, Discardable, Discard, Sequence,
+    TakeChars, TakeCharsIf, TakeWhile, TakeUntil, Token,
+    TakeIf, TakeAll, Apply, Literal, Discardable, Discard, Sequence,
     Optional, Alternatives,
 )
-from .utils import compose, flatten, truncate
+from .utils import compose, flatten, truncate, is_alpha
 
 
 class TestTruncate(unittest.TestCase):
@@ -71,34 +71,33 @@ class TestParserBuilding(unittest.TestCase):
 
 class TestTake(unittest.TestCase):
     def test_it_should_parse_the_given_number_of_characters(self):
-        p = Take(3)
+        p = TakeChars(3)
 
         self.assertEqual(p('arst'), ('ars', 't'))
 
     def test_it_should_require_a_number_greater_than_zero(self):
         with self.assertRaises(ValueError):
-            Take(0)
+            TakeChars(0)
 
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         with self.assertRaises(NotEnoughInputError):
-            Take(10).parse('arst')
+            TakeChars(10).parse('arst')
 
 
-class TestTakeIf(unittest.TestCase):
+class TestCharsTakeIf(unittest.TestCase):
     def setUp(self):
-        self.p = TakeIf(3, lambda x: x.isalpha())
+        self.p = TakeCharsIf(3, is_alpha)
 
     def test_it_should_conditionally_parse_the_given_number_of_characters(self):
         self.assertEqual(self.p('arst'), ('ars', 't'))
 
     def test_it_should_be_invertible(self):
-        p = ~self.p
-
+        p = ~(self.p)
         self.assertEqual(p('1234'), ('123', '4'))
 
     def test_it_should_require_a_number_greater_than_zero(self):
         with self.assertRaises(ValueError):
-            TakeIf(0, lambda x: None)
+            TakeCharsIf(0, lambda x: None)
 
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         with self.assertRaises(ImproperInputError):
@@ -143,16 +142,19 @@ class TestSpaces(unittest.TestCase):
 
 
 class TestTakeUntil(unittest.TestCase):
-    def test_it_should_parse_input_until_an_occurrence_of_the_given_string(self):
-        p = TakeUntil('arst')
+    def setUp(self):
+        self.p = TakeUntil(Literal('arst'))
 
-        self.assertEqual(p('before arst after'), ('before ', 'arst after'))
+    def test_it_should_parse_input_until_the_given_parser_succeeds(self):
+        self.assertEqual(self.p('before arst after'), ('before ', 'arst after'))
 
-    def test_it_should_raise_an_error_if_the_given_string_is_not_found(self):
-        p = TakeUntil('arst')
-
+    def test_it_should_raise_an_error_if_the_given_parser_never_succeeds(self):
         with self.assertRaises(ImproperInputError):
-            p('before after')
+            self.p('before after')
+
+    def test_it_should_raise_an_error_if_the_given_parser_succeeds_immediately(self):
+        with self.assertRaises(ImproperInputError):
+            self.p('arst')
 
 
 class TestToken(unittest.TestCase):
@@ -162,6 +164,18 @@ class TestToken(unittest.TestCase):
         self.assertEqual(p('arst arst'), ('arst', 'arst'))
         self.assertEqual(p('arst '), ('arst', ''))
         self.assertEqual(p('arst'), ('arst', ''))
+
+
+class TestTakeIf(unittest.TestCase):
+    def setUp(self):
+        self.p = TakeIf(Token(alphas), lambda x: x == 'yodude')
+
+    def test_it_should_parse_input_using_the_given_parser_validated_by_the_given_predicate(self):
+        self.assertEqual(self.p('yodude arst'), ('yodude', 'arst'))
+
+    def test_it_should_raise_an_error_if_nothing_can_be_parsed(self):
+        with self.assertRaises(ImproperInputError):
+            self.p('arst arst')
 
 
 class TestTakeAll(unittest.TestCase):
@@ -181,22 +195,22 @@ class TestPositiveInteger(unittest.TestCase):
         self.assertEqual(positive_integer('1234 arst'), (1234, ' arst'))
 
 
-class TestAccept(unittest.TestCase):
+class TestLiteral(unittest.TestCase):
     def test_it_should_parse_a_specific_string_from_the_front_of_the_input(self):
-        p = Accept('arst')
+        p = Literal('arst')
 
         self.assertEqual(p('arst1234'), ('arst', '1234'))
 
     def test_it_should_raise_an_error_if_parsing_fails(self):
         with self.assertRaises(ImproperInputError):
-            Accept('arst').parse('ars1234')
+            Literal('arst').parse('ars1234')
 
 
 class TestSequence(unittest.TestCase):
     def setUp(self):
         self.p = Sequence(
             Token(alphas),
-            Token(Accept('=')),
+            Token(Literal('=')),
             Token(positive_integer),
         )
 
@@ -210,12 +224,12 @@ class TestSequence(unittest.TestCase):
 
 class TestOptional(unittest.TestCase):
     def test_it_should_make_a_parser_optional(self):
-        p1 = Optional(Accept('a'))
+        p1 = Optional(Literal('a'))
 
         self.assertEqual(p1('arst'), ('a', 'rst'))
         self.assertEqual(p1('rst'), (Discardable(None), 'rst'))
 
-        p2 = digits & Optional(Accept('.') & digits)
+        p2 = digits & Optional(Literal('.') & digits)
 
         self.assertEqual(p2('1234'), (('1234',), ''))
         self.assertEqual(p2('1234.'), (('1234',), '.'))
@@ -233,14 +247,14 @@ class TestApply(unittest.TestCase):
             self.Statement,
             Sequence(
                 Token(alphas),
-                Discard(Token(Accept('='))),
+                Discard(Token(Literal('='))),
                 positive_integer,
             ),
         )
 
         self.p2 = Apply(
             lambda *args: float(''.join(args)),
-            digits & Optional(Accept('.') & digits),
+            digits & Optional(Literal('.') & digits),
         )
 
     def test_it_should_apply_a_function_to_parser_results(self):
@@ -280,7 +294,7 @@ class TestDiscard(unittest.TestCase):
     def setUp(self):
         self.p = Sequence(
             Token(alphas),
-            compose(Discard, Token, Accept)('='),
+            compose(Discard, Token, Literal)('='),
             Token(positive_integer),
         )
 

@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 import parsing
 
@@ -6,5 +6,5 @@ import parsing
 setup(
     name='parsing',
     version=parsing.version,
-    py_modules=['parsing'],
+    packages=find_packages(),
 )
