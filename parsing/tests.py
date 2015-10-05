@@ -153,6 +153,11 @@ class TestTakeUntil(unittest.TestCase):
     def test_it_should_parse_input_until_the_given_parser_succeeds(self):
         self.assertEqual(self.p('before arst after'), ('before ', 'arst after'))
 
+    def test_it_should_accept_a_string_as_an_argument(self):
+        # In this case, it should just parse until the literal string is
+        # encountered
+        self.assertEqual(TakeUntil('arst').parse('before arst after'), ('before ', 'arst after'))
+
     def test_it_should_raise_an_error_if_the_given_parser_never_succeeds(self):
         with self.assertRaises(ImproperInputError):
             self.p('before after')
@@ -213,18 +218,26 @@ class TestLiteral(unittest.TestCase):
 
 class TestSequence(unittest.TestCase):
     def setUp(self):
-        self.p = Sequence(
+        self.p1 = Sequence(
             Token(alphas),
             Token(Literal('=')),
             Token(positive_integer),
         )
+        self.p2 = Sequence(
+            Token(alphas),
+            Discard(Token(Literal('='))),
+            Token(positive_integer),
+        )
 
     def test_it_should_combine_parsers_to_make_a_larger_parser(self):
-        self.assertEqual(self.p('arst = 1234 '), (('arst', '=', 1234), ''))
+        self.assertEqual(self.p1('arst = 1234 '), (('arst', '=', 1234), ''))
 
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         with self.assertRaises(ImproperInputError):
-            self.p('arst = ')
+            self.p1('arst = ')
+
+    def test_it_should_not_include_discardable_results(self):
+        self.assertEqual(self.p2('arst = 1234 '), (('arst', 1234), ''))
 
 
 class TestOptional(unittest.TestCase):
@@ -296,15 +309,13 @@ class TestAlternatives(unittest.TestCase):
 
 
 class TestDiscard(unittest.TestCase):
-    def setUp(self):
-        self.p = Sequence(
-            Token(alphas),
-            compose(Discard, Token, Literal)('='),
-            Token(positive_integer),
-        )
+    def test_it_should_parse_using_the_given_parser_and_mark_the_result_as_discardable(self):
+        self.assertEqual(Discard(Literal('arst')).parse('arst'), (Discardable('arst'), ''))
 
-    def test_it_should_allow_combined_parsers_to_discard_certain_values_in_the_result_tuple(self):
-        self.assertEqual(self.p('arst = 1234 '), (('arst', 1234), ''))
+    def test_it_should_accept_a_string_as_an_argument(self):
+        # In this case, it should parse the given string and mark it as
+        # discardable
+        self.assertEqual(Discard('arst').parse('arst'), (Discardable('arst'), ''))
 
 
 if __name__ == '__main__':

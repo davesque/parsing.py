@@ -110,7 +110,7 @@ class TakeUntil(Parser):
     move = TakeChars(1)
 
     def __init__(self, p):
-        self.p = p
+        self.p = Literal(p) if isinstance(p, basestring) else p
 
     def parse(self, xs):
         xs_ = xs
@@ -217,7 +217,7 @@ class Discard(Parser):
     ``Sequence`` parsers.
     """
     def __init__(self, p):
-        self.p = p
+        self.p = Literal(p) if isinstance(p, basestring) else p
 
     def parse(self, xs):
         x, xs = self.p(xs)
