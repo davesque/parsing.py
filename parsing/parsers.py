@@ -148,9 +148,9 @@ class TakeUntil(Parser):
 
 class TakeAll(Parser):
     """
-    Augements the given parser ``p`` to continue applying itself to the input
-    as long as parsing with ``p`` succeeds.  If no input can be parsed at all
-    with ``p``, raises an exception.
+    Augments the given parser ``p`` to continue applying itself to the input as
+    long as parsing with ``p`` succeeds.  If no input can be parsed at all with
+    ``p``, raises an exception.
     """
     def __init__(self, p):
         self.p = p
