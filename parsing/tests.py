@@ -1,3 +1,4 @@
+import doctest
 import unittest
 
 from .basic import digits, alphas, spaces, positive_integer
@@ -7,7 +8,24 @@ from .parsers import (
     TakeIf, TakeAll, Apply, Literal, Discardable, Discard, Sequence,
     Optional, Alternatives,
 )
-from .utils import compose, flatten, truncate, is_alpha
+from .utils import compose, flatten, truncate, join, is_alpha, unary, equals
+
+
+class TestEquals(unittest.TestCase):
+    def test_it_should_return_a_function_that_compares_against_x(self):
+        self.assertTrue(equals(234)(234))
+        self.assertFalse(equals(234)(123))
+
+
+class TestUnary(unittest.TestCase):
+    def test_it_convert_a_function_into_a_unary_version_of_itself(self):
+        self.assertEqual(unary(lambda x, y: x + y)([1, 2]), 3)
+
+
+class TestJoin(unittest.TestCase):
+    def test_it_should_join_a_sequence_into_a_string(self):
+        self.assertEqual(join(list('arst')), 'arst')
+        self.assertEqual(join(map(str, [1, 2, 3, 4])), '1234')
 
 
 class TestTruncate(unittest.TestCase):
@@ -32,16 +50,16 @@ class TestCompose(unittest.TestCase):
 
 
 class TestFlatten(unittest.TestCase):
-    def test_it_should_flatten_the_given_arbitrarily_nested_list(self):
+    def test_it_should_flatten_an_arbitrarily_nested_list(self):
         self.assertEqual(
             flatten([1, 2, [3, 4, [5, 6]]]),
             [1, 2, 3, 4, 5, 6],
         )
 
-        heavily_nested = reduce(lambda a, i: (a, i), range(100))
+        heavily_nested = reduce(lambda a, i: (a, i), range(1000))
         self.assertEqual(
             flatten(heavily_nested),
-            list(range(100)),
+            list(range(1000)),
         )
 
 
@@ -95,35 +113,23 @@ class TestCharsTakeIf(unittest.TestCase):
         p = ~(self.p)
         self.assertEqual(p('1234'), ('123', '4'))
 
-    def test_it_should_require_a_number_greater_than_zero(self):
-        with self.assertRaises(ValueError):
-            TakeCharsIf(0, lambda x: None)
-
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         with self.assertRaises(ImproperInputError):
             self.p('ar12')
 
-        with self.assertRaises(NotEnoughInputError):
-            self.p('ar')
-
 
 class TestTakeWhile(unittest.TestCase):
-    def test_it_should_parse_input_as_long_as_the_predicate_is_true(self):
-        p = TakeWhile(lambda x: x.isalpha())
+    def setUp(self):
+        self.p = TakeWhile(is_alpha)
 
-        self.assertEqual(p('ars1'), ('ars', '1'))
-        self.assertEqual(p('arst'), ('arst', ''))
+    def test_it_should_parse_input_as_long_as_the_predicate_is_true(self):
+        self.assertEqual(self.p('ars1'), ('ars', '1'))
+        self.assertEqual(self.p('arst'), ('arst', ''))
 
     def test_it_should_raise_an_error_under_certain_conditions(self):
-        p = TakeWhile(lambda x: x.isalpha())
-
         # If no characters could be successfully parsed from a non-empty input
         with self.assertRaises(ImproperInputError):
-            p('1234')
-
-        # If given input is empty
-        with self.assertRaises(NotEnoughInputError):
-            p('')
+            self.p('1234')
 
 
 class TestDigits(unittest.TestCase):
@@ -168,7 +174,7 @@ class TestToken(unittest.TestCase):
 
 class TestTakeIf(unittest.TestCase):
     def setUp(self):
-        self.p = TakeIf(Token(alphas), lambda x: x == 'yodude')
+        self.p = TakeIf(Token(alphas), equals('yodude'))
 
     def test_it_should_parse_input_using_the_given_parser_validated_by_the_given_predicate(self):
         self.assertEqual(self.p('yodude arst'), ('yodude', 'arst'))
@@ -229,7 +235,7 @@ class TestOptional(unittest.TestCase):
         self.assertEqual(p1('arst'), ('a', 'rst'))
         self.assertEqual(p1('rst'), (Discardable(None), 'rst'))
 
-        p2 = digits & Optional(Literal('.') & digits)
+        p2 = Apply(compose(tuple, flatten), digits & Optional(Literal('.') & digits))
 
         self.assertEqual(p2('1234'), (('1234',), ''))
         self.assertEqual(p2('1234.'), (('1234',), '.'))
@@ -244,16 +250,16 @@ class TestApply(unittest.TestCase):
 
     def setUp(self):
         self.p1 = Apply(
-            self.Statement,
+            unary(self.Statement),
             Sequence(
                 Token(alphas),
-                Discard(Token(Literal('='))),
+                compose(Discard, Token, Literal)('='),
                 positive_integer,
             ),
         )
 
         self.p2 = Apply(
-            lambda *args: float(''.join(args)),
+            compose(tuple, flatten),
             digits & Optional(Literal('.') & digits),
         )
 
@@ -304,3 +310,4 @@ class TestDiscard(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    doctest.testmod()

@@ -1,8 +1,21 @@
+from functools import partial
 import operator
 
 
 def truncate(s):
     return s[:10] + '...' if len(s) > 10 else s
+
+
+def join(xs):
+    return ''.join(xs)
+
+
+def unary(f):
+    return lambda args: f(*args)
+
+
+def equals(x):
+    return partial(operator.eq, x)
 
 
 def compose(*fs):

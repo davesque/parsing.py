@@ -1,5 +1,5 @@
 from .exceptions import ParseError, NotEnoughInputError, ImproperInputError
-from .utils import truncate, flatten
+from .utils import truncate, equals
 
 
 class Parser(object):
@@ -35,6 +35,71 @@ class TakeChars(Parser):
             ))
 
         return (xs[:n], xs[n:])
+
+
+class TakeIf(Parser):
+    def __init__(self, p, f):
+        self.p = p
+        self.f = f
+
+    def parse(self, xs):
+        x, xs = self.p(xs)
+
+        if not self.f(x):
+            raise ImproperInputError('Condition not met for "{0}" parsed from "{1}"'.format(
+                truncate(x),
+                truncate(xs),
+            ))
+
+        return (x, xs)
+
+    def __invert__(self):
+        return TakeIf(self.p, lambda x: not self.f(x))
+
+
+class TakeCharsIf(TakeIf):
+    """
+    Constructs a parser which takes ``n`` items if the given predicate ``f``
+    returns ``True`` for the parsed items.
+    """
+    def __init__(self, n, f):
+        super(TakeCharsIf, self).__init__(TakeChars(n), f)
+
+
+class Literal(TakeCharsIf):
+    """
+    Constructs a parser which parses the given string ``s``.
+    """
+    def __init__(self, s):
+        super(Literal, self).__init__(len(s), equals(s))
+
+
+class TakeWhile(TakeCharsIf):
+    """
+    Constructs a parser which takes items as long as the given predicate ``f``
+    returns ``True`` for the parsed items.
+    """
+    def __init__(self, f):
+        super(TakeWhile, self).__init__(1, f)
+
+    def parse(self, xs):
+        result = []
+
+        i = 0
+        while True:
+            try:
+                x, xs_ = super(TakeWhile, self).parse(xs)
+            except ParseError as e:
+                # If no parsing can be done at all, raise an error
+                if i == 0:
+                    raise e
+
+                return (''.join(result), xs)
+
+            result.append(x)
+            xs = xs_
+
+            i += 1
 
 
 class TakeUntil(Parser):
@@ -77,89 +142,6 @@ class TakeUntil(Parser):
         return (''.join(result), xs)
 
 
-class TakeIf(Parser):
-    def __init__(self, p, f):
-        self.p = p
-        self.f = f
-
-    def parse(self, xs):
-        x, xs = self.p(xs)
-
-        if not self.f(x):
-            raise ImproperInputError('Condition not met for "{0}" parsed from "{1}"'.format(
-                truncate(x),
-                truncate(xs),
-            ))
-
-        return (x, xs)
-
-    def __invert__(self):
-        return TakeIf(self.p, lambda x: not self.f(x))
-
-
-class TakeCharsIf(TakeIf):
-    """
-    Constructs a parser which takes ``n`` items if the given predicate ``f``
-    returns ``True`` for the parsed items.
-    """
-    def __init__(self, n, f):
-        super(TakeCharsIf, self).__init__(TakeChars(n), f)
-
-
-class TakeWhile(TakeCharsIf):
-    """
-    Constructs a parser which takes items as long as the given predicate ``f``
-    returns ``True`` for the parsed items.
-    """
-    def __init__(self, f):
-        super(TakeWhile, self).__init__(1, f)
-
-    def parse(self, xs):
-        result = []
-
-        i = 0
-        while True:
-            try:
-                x, xs_ = super(TakeWhile, self).parse(xs)
-            except ParseError as e:
-                # If no parsing can be done at all, raise an error
-                if i == 0:
-                    raise e
-
-                return (''.join(result), xs)
-
-            result.append(x)
-            xs = xs_
-
-            i += 1
-
-
-class Token(Parser):
-    """
-    Augments the given parser ``p`` to expect and consume whitespace after any
-    items successfully parsed by ``p``.  The parser ``separation_parser`` can
-    be provided to customize whitespace parsing behavior.
-    """
-    def __init__(self, p, separation_parser=None):
-        self.p = p
-
-        if separation_parser:
-            self.s = separation_parser
-        else:
-            from .basic import spaces
-            self.s = spaces
-
-    def parse(self, xs):
-        x, xs = self.p(xs)
-
-        try:
-            _, xs = self.s(xs)
-        except NotEnoughInputError:
-            pass
-
-        return (x, xs)
-
-
 class TakeAll(Parser):
     """
     Augements the given parser ``p`` to continue applying itself to the input
@@ -191,12 +173,30 @@ class TakeAll(Parser):
         return (tuple(result), xs)
 
 
-class Literal(TakeCharsIf):
+class Token(Parser):
     """
-    Constructs a parser which parses the given string ``s``.
+    Augments the given parser ``p`` to expect and consume whitespace after any
+    items successfully parsed by ``p``.  The parser ``separation_parser`` can
+    be provided to customize whitespace parsing behavior.
     """
-    def __init__(self, s):
-        super(Literal, self).__init__(len(s), lambda x: x == s)
+    def __init__(self, p, separation_parser=None):
+        self.p = p
+
+        if separation_parser:
+            self.s = separation_parser
+        else:
+            from .basic import spaces
+            self.s = spaces
+
+    def parse(self, xs):
+        x, xs = self.p(xs)
+
+        try:
+            _, xs = self.s(xs)
+        except NotEnoughInputError:
+            pass
+
+        return (x, xs)
 
 
 class Discardable(object):
@@ -268,7 +268,7 @@ class Sequence(Compound):
                 truncate(xs_),
             ))
 
-        return (tuple(flatten(result)), xs)
+        return (tuple(result), xs)
 
 
 class Alternatives(Compound):
@@ -301,9 +301,4 @@ class Apply(Parser):
     def parse(self, xs):
         x, xs = self.p(xs)
 
-        if isinstance(x, (list, tuple)):
-            x = self.f(*x)
-        else:
-            x = self.f(x)
-
-        return (x, xs)
+        return (self.f(x), xs)
