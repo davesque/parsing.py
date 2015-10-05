@@ -1,4 +1,3 @@
-import doctest
 import unittest
 
 from .basic import digits, alphas, spaces, positive_integer
@@ -310,4 +309,3 @@ class TestDiscard(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    doctest.testmod()
