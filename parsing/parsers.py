@@ -300,5 +300,4 @@ class Apply(Parser):
 
     def parse(self, xs):
         x, xs = self.p(xs)
-
         return (self.f(x), xs)

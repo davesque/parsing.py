@@ -259,7 +259,7 @@ class TestApply(unittest.TestCase):
         )
 
         self.p2 = Apply(
-            compose(tuple, flatten),
+            compose(float, join, flatten),
             digits & Optional(Literal('.') & digits),
         )
 
