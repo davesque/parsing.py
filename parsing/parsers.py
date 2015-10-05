@@ -38,6 +38,10 @@ class TakeChars(Parser):
 
 
 class TakeIf(Parser):
+    """
+    Constructs a parser which parses the given input with a parser ``p`` if a
+    predicate ``f`` returns ``True`` for the result of ``p``.
+    """
     def __init__(self, p, f):
         self.p = p
         self.f = f
