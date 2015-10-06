@@ -7,4 +7,5 @@ setup(
     name='parsing',
     version=parsing.version,
     packages=find_packages(),
+    test_suite='parsing.tests',
 )
