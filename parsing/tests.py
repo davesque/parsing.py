@@ -8,7 +8,7 @@ from .parsers import (
     TakeIf, TakeAll, Apply, Literal, Discardable, Discard, Sequence,
     Optional, Alternatives,
 )
-from .utils import compose, flatten, truncate, join, is_alpha, unary, equals, Stream
+from .utils import compose, flatten, truncate, join, is_alpha, unary, equals, Stream, StreamError
 
 
 class TestStream(unittest.TestCase):
@@ -23,13 +23,34 @@ class TestStream(unittest.TestCase):
         x = self.stream.get(12)
         self.assertEqual(u''.join(x), u'arstarstzxcv')
 
-    def test_it_should_handle_eof_correctly(self):
-        x = self.stream.get(100)
+    def test_it_should_raise_an_exception_when_end_of_stream_reached(self):
+        x = self.stream.get(16)
         self.assertEqual(u''.join(x), u'arstarstzxcvzxcv')
+
+        with self.assertRaises(StreamError):
+            self.stream.get(1)
+
+        self.stream.put('arst')
+
+        with self.assertRaises(StreamError):
+            self.stream.get(5)
 
     def test_it_should_accept_a_string_as_an_argument(self):
         s = Stream('arst')
-        self.assertEqual(''.join(s.get(100)), 'arst')
+        self.assertEqual(''.join(s.get(4)), 'arst')
+
+    def test_it_should_return_correct_amount_of_content_from_internal_buffer_only(self):
+        x = self.stream.get(16)
+        self.stream.put(x)
+        x = self.stream.get(4)
+
+        self.assertEqual(''.join(x), 'arst')
+
+    def test_it_should_require_a_non_negative_integer(self):
+        with self.assertRaises(StreamError):
+            self.stream.get(-1)
+
+        self.assertEqual(self.stream.get(0), [])
 
 
 class TestEquals(unittest.TestCase):

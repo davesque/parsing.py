@@ -39,6 +39,10 @@ def flatten(seq, seqtypes=(list, tuple)):
     return seq
 
 
+class StreamError(Exception):
+    pass
+
+
 class Stream(object):
     def __init__(self, s):
         self.stream = StringIO(s) if isinstance(s, basestring) else s
@@ -49,16 +53,26 @@ class Stream(object):
         self._put.extend(x)
 
     def get(self, n):
+        if n < 0:
+            raise StreamError('Cannot request negative amounts of items')
+
         result = []
 
+        i = n
         while True:
             try:
                 result.append(self._put.popleft())
-                n -= 1
+                i -= 1
             except IndexError:
                 break
 
-        result.extend(self.stream.read(n))
+            if i == 0:
+                break
+
+        result.extend(self.stream.read(i))
+
+        if len(result) != n:
+            raise StreamError('End of stream reached')
 
         return result
 
