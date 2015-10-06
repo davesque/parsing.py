@@ -87,18 +87,13 @@ class ScrollingStream(Stream):
 
         if n is None:
             xs = buf
-
             if len(xs) == 0:
                 raise BeginningOfStreamError('Cannot unget past beginning of stream', result=xs)
-
             self._buf = []
-
         else:
             xs = buf[-n:]
-
             if len(xs) != n:
                 raise BeginningOfStreamError('Cannot unget past beginning of stream', result=xs)
-
             buf[-n:] = []
 
         self.put(xs)
