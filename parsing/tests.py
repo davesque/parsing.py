@@ -15,7 +15,7 @@ class TestStream(unittest.TestCase):
     def setUp(self):
         self.stream = Stream(StringIO('arst' * 2 + 'zxcv' * 2))
 
-    def test_it_should_wrap_any_object_with_a_read_method_and_provide_put_method(self):
+    def test_it_should_wrap_any_object_with_a_read_method_and_provide_a_put_method(self):
         x = self.stream.get(8)
         self.assertEqual(u''.join(x), u'arstarst')
 

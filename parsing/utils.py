@@ -39,6 +39,11 @@ def flatten(seq, seqtypes=(list, tuple)):
     return seq
 
 
+is_digit = operator.methodcaller('isdigit')
+is_alpha = operator.methodcaller('isalpha')
+is_space = operator.methodcaller('isspace')
+
+
 class StreamError(Exception):
     pass
 
@@ -75,8 +80,3 @@ class Stream(object):
             raise StreamError('End of stream reached')
 
         return result
-
-
-is_digit = operator.methodcaller('isdigit')
-is_alpha = operator.methodcaller('isalpha')
-is_space = operator.methodcaller('isspace')
