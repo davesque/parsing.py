@@ -1,16 +1,58 @@
 from .exceptions import ParseError, NotEnoughInputError, ImproperInputError
+from .streams import StreamError, ScrollingStream
 from .utils import truncate, equals
 
 
 class Parser(object):
-    def __call__(self, *args, **kwargs):
-        return self.parse(*args, **kwargs)
+    def __call__(self, xs):
+        return self.parse(xs)
 
     def __and__(self, other):
         return Sequence(self, other)
 
     def __or__(self, other):
         return Alternatives(self, other)
+
+
+class RootParser(Parser):
+    """
+    Augments a parser ``p`` to be suitable for use as a root parser.  A root
+    parser may be used to begin a parsing operation.
+    """
+    def __init__(self, p):
+        self.p = p
+
+    def parse(self, xs):
+        xs = xs if isinstance(xs, ScrollingStream) else ScrollingStream(xs)
+
+        return self.p(xs)
+
+
+class TakeItems(Parser):
+    """
+    Constructs a parser which takes ``n`` items.
+    """
+    def __init__(self, n):
+        # n must be positive
+        if n < 1:
+            raise ValueError('Must provide integer greater than zero')
+
+        self.n = n
+
+    def parse(self, xs):
+        n = self.n
+
+        try:
+            result = xs.get(n)
+        except StreamError as e:
+            raise xs.get_error(NotEnoughInputError, 'Expected {0} item(s) but only got {1}'.format(
+                n,
+                len(e.result),
+            ))
+
+        return (result, xs)
+
+take_one = TakeItems(1)
 
 
 class TakeChars(Parser):

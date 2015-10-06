@@ -3,9 +3,9 @@ import unittest
 from ..basic import digits, alphas, spaces, positive_integer
 from ..exceptions import NotEnoughInputError, ImproperInputError
 from ..parsers import (
-    TakeChars, TakeCharsIf, TakeWhile, TakeUntil, Token,
-    TakeIf, TakeAll, Apply, Literal, Discardable, Discard, Sequence,
-    Optional, Alternatives,
+    RootParser, TakeItems, TakeChars, TakeCharsIf, TakeWhile, TakeUntil, Token,
+    TakeIf, TakeAll, Apply, Literal, Discardable, Discard, Sequence, Optional,
+    Alternatives,
 )
 from ..utils import compose, flatten, join, is_alpha, unary, equals
 
@@ -34,7 +34,21 @@ class TestParserBuilding(unittest.TestCase):
         )
 
 
-class TestTake(unittest.TestCase):
+class TestTakeItems(unittest.TestCase):
+    def test_it_should_parse_the_given_number_of_characters(self):
+        p = RootParser(TakeItems(3))
+        self.assertEqual(p('arst'), (list('ars'), 't'))
+
+    def test_it_should_require_a_number_greater_than_zero(self):
+        with self.assertRaises(ValueError):
+            TakeItems(0)
+
+    def test_it_should_raise_an_exception_if_not_enough_input(self):
+        with self.assertRaises(NotEnoughInputError):
+            RootParser(TakeItems(10)).parse('arst')
+
+
+class TestTakeChars(unittest.TestCase):
     def test_it_should_parse_the_given_number_of_characters(self):
         p = TakeChars(3)
 
