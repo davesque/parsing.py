@@ -1,3 +1,4 @@
+from StringIO import StringIO
 import unittest
 
 from .basic import digits, alphas, spaces, positive_integer
@@ -12,11 +13,7 @@ from .utils import compose, flatten, truncate, join, is_alpha, unary, equals, St
 
 class TestStream(unittest.TestCase):
     def setUp(self):
-        self.f = open('test.txt', 'r')
-        self.stream = Stream(self.f)
-
-    def tearDown(self):
-        self.f.close()
+        self.stream = Stream(StringIO('arst' * 2 + 'zxcv' * 2))
 
     def test_it_should_wrap_any_object_with_a_read_method_and_provide_put_method(self):
         x = self.stream.get(8)
@@ -28,7 +25,7 @@ class TestStream(unittest.TestCase):
 
     def test_it_should_handle_eof_correctly(self):
         x = self.stream.get(100)
-        self.assertEqual(u''.join(x), u'arstarstzxcvzxcv\n')
+        self.assertEqual(u''.join(x), u'arstarstzxcvzxcv')
 
     def test_it_should_accept_a_string_as_an_argument(self):
         s = Stream('arst')
