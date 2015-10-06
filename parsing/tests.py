@@ -7,7 +7,32 @@ from .parsers import (
     TakeIf, TakeAll, Apply, Literal, Discardable, Discard, Sequence,
     Optional, Alternatives,
 )
-from .utils import compose, flatten, truncate, join, is_alpha, unary, equals
+from .utils import compose, flatten, truncate, join, is_alpha, unary, equals, Stream
+
+
+class TestStream(unittest.TestCase):
+    def setUp(self):
+        self.f = open('test.txt', 'r')
+        self.stream = Stream(self.f)
+
+    def tearDown(self):
+        self.f.close()
+
+    def test_it_should_wrap_any_object_with_a_read_method_and_provide_put_method(self):
+        x = self.stream.get(8)
+        self.assertEqual(u''.join(x), u'arstarst')
+
+        self.stream.put(x)
+        x = self.stream.get(12)
+        self.assertEqual(u''.join(x), u'arstarstzxcv')
+
+    def test_it_should_handle_eof_correctly(self):
+        x = self.stream.get(100)
+        self.assertEqual(u''.join(x), u'arstarstzxcvzxcv\n')
+
+    def test_it_should_accept_a_string_as_an_argument(self):
+        s = Stream('arst')
+        self.assertEqual(''.join(s.get(100)), 'arst')
 
 
 class TestEquals(unittest.TestCase):

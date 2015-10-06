@@ -1,3 +1,5 @@
+from StringIO import StringIO
+from collections import deque
 from functools import partial
 import operator
 
@@ -35,6 +37,30 @@ def flatten(seq, seqtypes=(list, tuple)):
             seq[i:i + 1] = seq[i]
 
     return seq
+
+
+class Stream(object):
+    def __init__(self, s):
+        self.stream = StringIO(s) if isinstance(s, basestring) else s
+
+        self._put = deque()
+
+    def put(self, x):
+        self._put.extend(x)
+
+    def get(self, n):
+        result = []
+
+        while True:
+            try:
+                result.append(self._put.popleft())
+                n -= 1
+            except IndexError:
+                break
+
+        result.extend(self.stream.read(n))
+
+        return result
 
 
 is_digit = operator.methodcaller('isdigit')
