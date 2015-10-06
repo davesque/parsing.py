@@ -1,13 +1,13 @@
 import unittest
 
-from .basic import digits, alphas, spaces, positive_integer
-from .exceptions import NotEnoughInputError, ImproperInputError
-from .parsers import (
+from ..basic import digits, alphas, spaces, positive_integer
+from ..exceptions import NotEnoughInputError, ImproperInputError
+from ..parsers import (
     TakeChars, TakeCharsIf, TakeWhile, TakeUntil, Token,
     TakeIf, TakeAll, Apply, Literal, Discardable, Discard, Sequence,
     Optional, Alternatives,
 )
-from .utils import compose, flatten, join, is_alpha, unary, equals
+from ..utils import compose, flatten, join, is_alpha, unary, equals
 
 
 class TestParserBuilding(unittest.TestCase):

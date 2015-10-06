@@ -1,6 +1,6 @@
 import unittest
 
-from .utils import compose, flatten, truncate, join, unary, equals
+from ..utils import compose, flatten, truncate, join, unary, equals
 
 
 class TestEquals(unittest.TestCase):
