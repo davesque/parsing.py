@@ -6,6 +6,16 @@ class StreamError(Exception):
     pass
 
 
+class EndOfStreamError(StreamError):
+    def __init__(self, msg, result=None):
+        super(StreamError, self).__init__(msg)
+        self.result = result
+
+
+class UngetError(StreamError):
+    pass
+
+
 class Stream(object):
     def __init__(self, s):
         self._stream = StringIO(s) if isinstance(s, basestring) else s
@@ -14,28 +24,36 @@ class Stream(object):
     def put(self, xs):
         self._put.extendleft(reversed(xs))
 
-    def get(self, n):
-        if n < 0:
-            raise StreamError('Cannot request negative amounts of items')
+    def get(self, n=None):
+        if n is not None and n < 0:
+            raise ValueError('Cannot request negative amounts of items')
 
         result = []
 
-        i = n
-        while True:
-            try:
-                result.append(self._put.popleft())
-                i -= 1
-            except IndexError:
-                break
+        if n is None:
+            result.extend(self._put)
+            self._put.clear()
+            result.extend(self._stream.read())
 
-            if i == 0:
-                break
+            if len(result) == 0:
+                raise EndOfStreamError('End of stream reached', result=result)
 
-        result.extend(self._stream.read(i))
+        else:
+            i = n
+            while True:
+                try:
+                    result.append(self._put.popleft())
+                    i -= 1
+                except IndexError:
+                    break
+                if i == 0:
+                    break
 
-        if len(result) != n:
-            self.put(result)
-            raise StreamError('End of stream reached')
+            result.extend(self._stream.read(i))
+
+            if len(result) != n:
+                self.put(result)
+                raise EndOfStreamError('End of stream reached', result=result)
 
         return result
 
@@ -68,7 +86,7 @@ class ScrollingStream(Stream):
         buf = self._buf
 
         if n > len(buf):
-            raise StreamError('Cannot unget past beginning of original content')
+            raise UngetError('Cannot unget past beginning of original content')
 
         xs = buf[-n:]
         self.put(xs)
@@ -81,6 +99,20 @@ class ScrollingStream(Stream):
                 self._column = self._line_columns.pop()
                 self._line -= 1
 
+    def peek(self, n=None):
+        xs = self.get(n)
+        self.unget(n)
+        return xs
+
     @property
     def position(self):
         return self._line, self._column
+
+    def get_error(self, ErrorClass, msg):
+        pos = self.position
+
+        return ErrorClass('At line {0}, col {1}: {2}'.format(
+            pos[0],
+            pos[1],
+            msg,
+        ))
