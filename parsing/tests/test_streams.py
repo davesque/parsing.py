@@ -1,7 +1,7 @@
 from StringIO import StringIO
 import unittest
 
-from ..utils import StreamError, Stream, ScrollingStream
+from ..streams import StreamError, Stream, ScrollingStream
 
 
 class TestScrollingStream(unittest.TestCase):
