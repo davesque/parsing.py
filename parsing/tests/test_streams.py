@@ -74,6 +74,7 @@ class TestScrollingStream(unittest.TestCase):
         self.assertEqual(''.join(self.s.get(5)), 'arst\n')
         self.assertEqual(''.join(self.s.get(4)), '1234')
         self.assertEqual(''.join(self.s.peek()), '\n\n')
+        self.assertEqual(''.join(self.s.get(2)), '\n\n')
 
     def test_it_should_include_the_would_be_result_if_beginning_of_stream_reached(self):
         try:

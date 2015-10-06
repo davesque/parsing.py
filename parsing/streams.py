@@ -112,7 +112,7 @@ class ScrollingStream(Stream):
 
     def peek(self, n=None):
         xs = self.get(n)
-        self.unget(n)
+        self.unget(len(xs))
         return xs
 
     @property
