@@ -20,7 +20,6 @@ class TestScrollingStream(unittest.TestCase):
         self.assertEqual(''.join(self.s.get(2)), '\n1')
         self.s.unget(1)
         self.assertEqual(''.join(self.s.get(1)), '1')
-        import ipdb; ipdb.set_trace()
         self.s.unget(1)
         self.s.unget(1)
         self.assertEqual(''.join(self.s.get(1)), '\n')
@@ -41,6 +40,30 @@ class TestScrollingStream(unittest.TestCase):
         self.assertEqual(self.s.position, (1, 1))
         self.s.get(11)
         self.assertEqual(self.s.position, (4, 1))
+
+    def test_it_should_raise_an_error_if_unget_passses_beginning_of_content(self):
+        with self.assertRaises(StreamError):
+            self.s.unget(1)
+
+        self.s.get(4)
+        with self.assertRaises(StreamError):
+            self.s.unget(5)
+
+    def test_if_unget_raises_an_error_should_not_jumble_content(self):
+        try:
+            self.s.unget(1)
+        except StreamError:
+            pass
+
+        self.s.get(4)
+
+        try:
+            self.s.unget(5)
+        except StreamError:
+            pass
+
+        self.s.unget(4)
+        self.assertEqual(''.join(self.s.get(8)), 'arst\n123')
 
 
 class TestStream(unittest.TestCase):
@@ -92,6 +115,13 @@ class TestStream(unittest.TestCase):
 
         x = self.stream.get(8)
         self.assertEqual(''.join(x), 'arstarst')
+
+    def test_it_should_not_mix_up_the_order_of_putted_content(self):
+        self.stream.put('5678')
+        self.stream.put('1234')
+
+        x = self.stream.get(8)
+        self.assertEqual(''.join(x), '12345678')
 
 
 class TestEquals(unittest.TestCase):

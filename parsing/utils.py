@@ -54,7 +54,7 @@ class Stream(object):
         self._put = deque()
 
     def put(self, xs):
-        self._put.extend(xs)
+        self._put.extendleft(reversed(xs))
 
     def get(self, n):
         if n < 0:
