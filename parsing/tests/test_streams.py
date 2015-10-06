@@ -1,7 +1,7 @@
 from StringIO import StringIO
 import unittest
 
-from ..streams import EndOfStreamError, UngetError, Stream, ScrollingStream
+from ..streams import EndOfStreamError, BeginningOfStreamError, Stream, ScrollingStream
 
 
 class TestScrollingStream(unittest.TestCase):
@@ -35,24 +35,24 @@ class TestScrollingStream(unittest.TestCase):
         self.assertEqual(self.s.position, (4, 1))
 
     def test_it_should_raise_an_error_if_unget_passses_beginning_of_content(self):
-        with self.assertRaises(UngetError):
+        with self.assertRaises(BeginningOfStreamError):
             self.s.unget(1)
 
         self.s.get(4)
-        with self.assertRaises(UngetError):
+        with self.assertRaises(BeginningOfStreamError):
             self.s.unget(5)
 
     def test_if_unget_raises_an_error_should_not_jumble_content(self):
         try:
             self.s.unget(1)
-        except UngetError:
+        except BeginningOfStreamError:
             pass
 
         self.s.get(4)
 
         try:
             self.s.unget(5)
-        except UngetError:
+        except BeginningOfStreamError:
             pass
 
         self.s.unget(4)
@@ -62,6 +62,19 @@ class TestScrollingStream(unittest.TestCase):
         self.assertEqual(''.join(self.s.peek(4)), 'arst')
         self.assertEqual(''.join(self.s.get(5)), 'arst\n')
         self.assertEqual(''.join(self.s.get(4)), '1234')
+
+    def test_it_should_include_the_would_be_result_if_beginning_of_stream_reached(self):
+        try:
+            self.s.unget(1)
+        except BeginningOfStreamError as e:
+            self.assertEqual(e.result, [])
+
+        self.s.get(4)
+
+        try:
+            self.s.unget(5)
+        except BeginningOfStreamError as e:
+            self.assertEqual(''.join(e.result), 'arst')
 
 
 class TestStream(unittest.TestCase):

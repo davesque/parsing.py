@@ -7,12 +7,12 @@ class StreamError(Exception):
 
 
 class EndOfStreamError(StreamError):
-    def __init__(self, msg, result=None):
+    def __init__(self, msg, result):
         super(StreamError, self).__init__(msg)
         self.result = result
 
 
-class UngetError(StreamError):
+class BeginningOfStreamError(EndOfStreamError):
     pass
 
 
@@ -85,12 +85,13 @@ class ScrollingStream(Stream):
     def unget(self, n):
         buf = self._buf
 
-        if n > len(buf):
-            raise UngetError('Cannot unget past beginning of original content')
-
         xs = buf[-n:]
-        self.put(xs)
+
+        if len(xs) != n:
+            raise BeginningOfStreamError('Cannot unget past beginning of stream', result=xs)
+
         buf[-n:] = []
+        self.put(xs)
 
         for x in xs:
             if x != '\n':
