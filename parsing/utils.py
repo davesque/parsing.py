@@ -50,12 +50,11 @@ class StreamError(Exception):
 
 class Stream(object):
     def __init__(self, s):
-        self.stream = StringIO(s) if isinstance(s, basestring) else s
-
+        self._stream = StringIO(s) if isinstance(s, basestring) else s
         self._put = deque()
 
-    def put(self, x):
-        self._put.extend(x)
+    def put(self, xs):
+        self._put.extend(xs)
 
     def get(self, n):
         if n < 0:
@@ -74,10 +73,56 @@ class Stream(object):
             if i == 0:
                 break
 
-        result.extend(self.stream.read(i))
+        result.extend(self._stream.read(i))
 
         if len(result) != n:
             self.put(result)
             raise StreamError('End of stream reached')
 
         return result
+
+
+class ScrollingStream(Stream):
+    def __init__(self, content):
+        super(ScrollingStream, self).__init__(content)
+
+        self._column = 1
+        self._line = 1
+        self._line_columns = []
+        self._buf = []
+
+    def get(self, *args, **kwargs):
+        xs = super(ScrollingStream, self).get(*args, **kwargs)
+
+        for x in xs:
+            if x != '\n':
+                self._column += 1
+            else:
+                self._line_columns.append(self._column)
+                self._column = 1
+                self._line += 1
+
+        self._buf.extend(xs)
+
+        return xs
+
+    def unget(self, n):
+        buf = self._buf
+
+        if n > len(buf):
+            raise StreamError('Cannot unget past beginning of original content')
+
+        xs = buf[-n:]
+        self.put(xs)
+        buf[-n:] = []
+
+        for x in xs:
+            if x != '\n':
+                self._column -= 1
+            else:
+                self._column = self._line_columns.pop()
+                self._line -= 1
+
+    @property
+    def position(self):
+        return self._line, self._column

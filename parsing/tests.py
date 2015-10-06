@@ -8,7 +8,39 @@ from .parsers import (
     TakeIf, TakeAll, Apply, Literal, Discardable, Discard, Sequence,
     Optional, Alternatives,
 )
-from .utils import compose, flatten, truncate, join, is_alpha, unary, equals, Stream, StreamError
+from .utils import compose, flatten, truncate, join, is_alpha, unary, equals, Stream, StreamError, ScrollingStream
+
+
+class TestScrollingStream(unittest.TestCase):
+    def setUp(self):
+        self.s = ScrollingStream('arst\n1234\n\n')
+
+    def test_it_should_be_rewindable(self):
+        self.assertEqual(''.join(self.s.get(4)), 'arst')
+        self.assertEqual(''.join(self.s.get(2)), '\n1')
+        self.s.unget(1)
+        self.assertEqual(''.join(self.s.get(1)), '1')
+        import ipdb; ipdb.set_trace()
+        self.s.unget(1)
+        self.s.unget(1)
+        self.assertEqual(''.join(self.s.get(1)), '\n')
+        self.s.unget(5)
+        self.assertEqual(''.join(self.s.get(11)), 'arst\n1234\n\n')
+
+    def test_it_should_keep_track_of_its_position(self):
+        self.assertEqual(self.s.position, (1, 1))
+        self.s.get(4)
+        self.assertEqual(self.s.position, (1, 5))
+        self.s.get(2)
+        self.assertEqual(self.s.position, (2, 2))
+        self.s.unget(1)
+        self.assertEqual(self.s.position, (2, 1))
+        self.s.unget(1)
+        self.assertEqual(self.s.position, (1, 5))
+        self.s.unget(4)
+        self.assertEqual(self.s.position, (1, 1))
+        self.s.get(11)
+        self.assertEqual(self.s.position, (4, 1))
 
 
 class TestStream(unittest.TestCase):
