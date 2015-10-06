@@ -122,3 +122,6 @@ class ScrollingStream(Stream):
             pos[1],
             msg,
         ))
+
+    def __eq__(self, other):
+        return self.peek() == list(other)

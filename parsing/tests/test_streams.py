@@ -94,6 +94,10 @@ class TestScrollingStream(unittest.TestCase):
         except BeginningOfStreamError as e:
             self.assertEqual(''.join(e.result), 'arst')
 
+    def test_comparing_should_peek_at_remaining_content_to_determine_equality(self):
+        self.assertEqual(self.s, list('arst\n1234\n\n'))
+        self.assertEqual(self.s.get(), list('arst\n1234\n\n'))
+
 
 class TestStream(unittest.TestCase):
     def setUp(self):
