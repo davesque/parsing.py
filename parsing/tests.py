@@ -52,6 +52,15 @@ class TestStream(unittest.TestCase):
 
         self.assertEqual(self.stream.get(0), [])
 
+    def test_it_should_not_discard_content_read_while_eof_encountered(self):
+        try:
+            self.stream.get(17)
+        except StreamError:
+            pass
+
+        x = self.stream.get(8)
+        self.assertEqual(''.join(x), 'arstarst')
+
 
 class TestEquals(unittest.TestCase):
     def test_it_should_return_a_function_that_compares_against_x(self):

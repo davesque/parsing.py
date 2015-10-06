@@ -77,6 +77,7 @@ class Stream(object):
         result.extend(self.stream.read(i))
 
         if len(result) != n:
+            self.put(result)
             raise StreamError('End of stream reached')
 
         return result
