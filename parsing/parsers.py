@@ -304,7 +304,6 @@ class Sequence(Compound):
         try:
             for p in self.ps:
                 x, xs = p(xs)
-
                 # Don't include result if discardable
                 if not isinstance(x, Discardable):
                     result.append(x)

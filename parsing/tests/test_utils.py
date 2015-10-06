@@ -10,7 +10,7 @@ class TestEquals(unittest.TestCase):
 
 
 class TestUnary(unittest.TestCase):
-    def test_it_convert_a_function_into_a_unary_version_of_itself(self):
+    def test_it_should_convert_a_function_into_a_unary_version_of_itself(self):
         self.assertEqual(unary(lambda x, y: x + y)([1, 2]), 3)
 
 
