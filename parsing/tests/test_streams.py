@@ -58,12 +58,29 @@ class TestScrollingStream(unittest.TestCase):
         self.s.unget(4)
         self.assertEqual(''.join(self.s.get(8)), 'arst\n123')
 
+    def test_it_should_allow_ungetting_all_gotten_content(self):
+        self.s.get(4)
+        self.s.unget()
+        x = self.s.get(4)
+        self.assertEqual(''.join(x), 'arst')
+
+        self.s.get()
+        self.s.unget()
+        x = self.s.get()
+        self.assertEqual(''.join(x), 'arst\n1234\n\n')
+
     def test_it_should_allow_peeking_at_future_content(self):
         self.assertEqual(''.join(self.s.peek(4)), 'arst')
         self.assertEqual(''.join(self.s.get(5)), 'arst\n')
         self.assertEqual(''.join(self.s.get(4)), '1234')
+        self.assertEqual(''.join(self.s.peek()), '\n\n')
 
     def test_it_should_include_the_would_be_result_if_beginning_of_stream_reached(self):
+        try:
+            self.s.unget()
+        except BeginningOfStreamError as e:
+            self.assertEqual(e.result, [])
+
         try:
             self.s.unget(1)
         except BeginningOfStreamError as e:

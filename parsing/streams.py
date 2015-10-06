@@ -82,15 +82,25 @@ class ScrollingStream(Stream):
 
         return xs
 
-    def unget(self, n):
+    def unget(self, n=None):
         buf = self._buf
 
-        xs = buf[-n:]
+        if n is None:
+            xs = buf
 
-        if len(xs) != n:
-            raise BeginningOfStreamError('Cannot unget past beginning of stream', result=xs)
+            if len(xs) == 0:
+                raise BeginningOfStreamError('Cannot unget past beginning of stream', result=xs)
 
-        buf[-n:] = []
+            self._buf = []
+
+        else:
+            xs = buf[-n:]
+
+            if len(xs) != n:
+                raise BeginningOfStreamError('Cannot unget past beginning of stream', result=xs)
+
+            buf[-n:] = []
+
         self.put(xs)
 
         for x in xs:
