@@ -3,7 +3,7 @@ import unittest
 from ..basic import digits, alphas, spaces, positive_integer
 from ..exceptions import NotEnoughInputError, ImproperInputError
 from ..parsers import (
-    TakeChars, TakeCharsIf, TakeWhile, TakeUntil, Token, TakeIf, TakeAll,
+    TakeItems, TakeItemsIf, TakeWhile, TakeUntil, Token, TakeIf, TakeAll,
     Apply, Literal, Discardable, Discard, Sequence, Optional, Alternatives,
 )
 from ..utils import compose, flatten, join, is_alpha, unary, equals
@@ -33,24 +33,24 @@ class TestParserBuilding(unittest.TestCase):
         )
 
 
-class TestTakeChars(unittest.TestCase):
+class TestTakeItems(unittest.TestCase):
     def test_it_should_parse_the_given_number_of_characters(self):
-        p = TakeChars(3)
+        p = TakeItems(3)
 
         self.assertEqual(p.parse('arst'), ('ars', 't'))
 
     def test_it_should_require_a_number_greater_than_zero(self):
         with self.assertRaises(ValueError):
-            TakeChars(0)
+            TakeItems(0)
 
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         with self.assertRaises(NotEnoughInputError):
-            TakeChars(10).parse('arst')
+            TakeItems(10).parse('arst')
 
 
-class TestCharsTakeIf(unittest.TestCase):
+class TestTakeItemsIf(unittest.TestCase):
     def setUp(self):
-        self.p = TakeCharsIf(3, is_alpha)
+        self.p = TakeItemsIf(3, is_alpha)
 
     def test_it_should_conditionally_parse_the_given_number_of_characters(self):
         self.assertEqual(self.p.parse('arst'), ('ars', 't'))

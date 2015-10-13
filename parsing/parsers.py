@@ -13,7 +13,7 @@ class Parser(object):
         return Alternatives(self, other)
 
 
-class TakeChars(Parser):
+class TakeItems(Parser):
     """
     Constructs a parser which takes ``n`` items.
     """
@@ -61,16 +61,16 @@ class TakeIf(Parser):
         return TakeIf(self.p, lambda x: not self.f(x))
 
 
-class TakeCharsIf(TakeIf):
+class TakeItemsIf(TakeIf):
     """
     Constructs a parser which takes ``n`` items if the given predicate ``f``
     returns ``True`` for the parsed items.
     """
     def __init__(self, n, f):
-        super(TakeCharsIf, self).__init__(TakeChars(n), f)
+        super(TakeItemsIf, self).__init__(TakeItems(n), f)
 
 
-class Literal(TakeCharsIf):
+class Literal(TakeItemsIf):
     """
     Constructs a parser which parses the given string ``s``.
     """
@@ -78,7 +78,7 @@ class Literal(TakeCharsIf):
         super(Literal, self).__init__(len(s), equals(s))
 
 
-class TakeWhile(TakeCharsIf):
+class TakeWhile(TakeItemsIf):
     """
     Constructs a parser which takes items as long as the given predicate ``f``
     returns ``True`` for the parsed items.
@@ -111,7 +111,7 @@ class TakeUntil(Parser):
     Constructs a parser which takes items until the given parser ``p``
     succeeds.
     """
-    move = TakeChars(1)
+    move = TakeItems(1)
 
     def __init__(self, p):
         self.p = Literal(p) if isinstance(p, basestring) else p
