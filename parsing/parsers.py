@@ -135,14 +135,14 @@ class TakeUntil(Parser):
                 x, xs = self.move(xs)
                 result.append(x)
             except NotEnoughInputError:
-                raise ImproperInputError('Terminal parser never succeeded in string "{0}"'.format(
+                raise xs_.get_error(ImproperInputError, 'Terminal parser never succeeded in string "{0}"'.format(
                     truncate(xs_),
                 ))
 
             i += 1
 
         if i == 0:
-            raise ImproperInputError('No content captured before terminal parser succeeded in string "{0}"'.format(
+            raise xs_.get_error(ImproperInputError, 'No content captured before terminal parser succeeded in string "{0}"'.format(
                 truncate(xs_),
             ))
 
@@ -167,7 +167,7 @@ class TakeAll(Parser):
                 x, xs = self.p(xs)
             except ParseError:
                 if i == 0:
-                    raise ImproperInputError('Could not parse anything from string "{0}"'.format(
+                    raise xs.get_error(ImproperInputError, 'Could not parse anything from string "{0}"'.format(
                         truncate(xs),
                     ))
 

@@ -69,28 +69,28 @@ class TestTakeWhile(unittest.TestCase):
         self.p = TakeWhile(is_alpha)
 
     def test_it_should_parse_input_as_long_as_the_predicate_is_true(self):
-        self.assertEqual(self.p.parse('ars1'), ('ars', '1'))
-        self.assertEqual(self.p.parse('arst'), ('arst', ''))
+        self.assertEqual(self.p.parse_string('ars1'), ('ars', '1'))
+        self.assertEqual(self.p.parse_string('arst'), ('arst', ''))
 
     def test_it_should_raise_an_error_under_certain_conditions(self):
         # If no characters could be successfully parsed from a non-empty input
         with self.assertRaises(ImproperInputError):
-            self.p.parse('1234')
+            self.p.parse_string('1234')
 
 
 class TestDigits(unittest.TestCase):
     def test_it_should_parse_input_chars_which_are_digits(self):
-        self.assertEqual(digits.parse('1234arst'), ('1234', 'arst'))
+        self.assertEqual(digits.parse_string('1234arst'), ('1234', 'arst'))
 
 
 class TestAlphas(unittest.TestCase):
     def test_it_should_parse_input_which_is_alphabetical(self):
-        self.assertEqual(alphas.parse('arst1234'), ('arst', '1234'))
+        self.assertEqual(alphas.parse_string('arst1234'), ('arst', '1234'))
 
 
 class TestSpaces(unittest.TestCase):
     def test_it_should_parse_input_which_is_whitespace(self):
-        self.assertEqual(spaces.parse(' \t\n\rarst'), (' \t\n\r', 'arst'))
+        self.assertEqual(spaces.parse_string(' \t\n\rarst'), (' \t\n\r', 'arst'))
 
 
 class TestTakeUntil(unittest.TestCase):
@@ -98,29 +98,29 @@ class TestTakeUntil(unittest.TestCase):
         self.p = TakeUntil(Literal('arst'))
 
     def test_it_should_parse_input_until_the_given_parser_succeeds(self):
-        self.assertEqual(self.p.parse('before arst after'), ('before ', 'arst after'))
+        self.assertEqual(self.p.parse_string('before arst after'), ('before ', 'arst after'))
 
     def test_it_should_accept_a_string_as_an_argument(self):
         # In this case, it should just parse until the literal string is
         # encountered
-        self.assertEqual(TakeUntil('arst').parse('before arst after'), ('before ', 'arst after'))
+        self.assertEqual(TakeUntil('arst').parse_string('before arst after'), ('before ', 'arst after'))
 
     def test_it_should_raise_an_error_if_the_given_parser_never_succeeds(self):
         with self.assertRaises(ImproperInputError):
-            self.p.parse('before after')
+            self.p.parse_string('before after')
 
     def test_it_should_raise_an_error_if_the_given_parser_succeeds_immediately(self):
         with self.assertRaises(ImproperInputError):
-            self.p.parse('arst')
+            self.p.parse_string('arst')
 
 
 class TestToken(unittest.TestCase):
     def test_it_should_parse_using_the_given_parser_and_consume_whitespace(self):
         p = Token(alphas)
 
-        self.assertEqual(p.parse('arst arst'), ('arst', 'arst'))
-        self.assertEqual(p.parse('arst '), ('arst', ''))
-        self.assertEqual(p.parse('arst'), ('arst', ''))
+        self.assertEqual(p.parse_string('arst arst'), ('arst', 'arst'))
+        self.assertEqual(p.parse_string('arst '), ('arst', ''))
+        self.assertEqual(p.parse_string('arst'), ('arst', ''))
 
 
 class TestTakeIf(unittest.TestCase):
@@ -128,11 +128,11 @@ class TestTakeIf(unittest.TestCase):
         self.p = TakeIf(Token(alphas), equals('yodude'))
 
     def test_it_should_parse_input_using_the_given_parser_validated_by_the_given_predicate(self):
-        self.assertEqual(self.p.parse('yodude arst'), ('yodude', 'arst'))
+        self.assertEqual(self.p.parse_string('yodude arst'), ('yodude', 'arst'))
 
     def test_it_should_raise_an_error_if_nothing_can_be_parsed(self):
         with self.assertRaises(ImproperInputError):
-            self.p.parse('arst arst')
+            self.p.parse_string('arst arst')
 
 
 class TestTakeAll(unittest.TestCase):
