@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from StringIO import StringIO
 from collections import deque
 
@@ -46,13 +48,15 @@ class CursorString(object):
 
         if n is None:
             x, xs = s, ''
+        elif n < 0:
+            raise ValueError('Cannot read negative amount of chars from string')
         else:
             x, xs = s[:n], s[n:]
 
         if len(x) < n:
             raise EndOfStringError('End of string reached', x)
 
-        ls = x.split(u'\n')
+        ls = x.split('\n')
         dl, dc = len(ls) - 1, len(ls[-1])
 
         return (x, type(self)(

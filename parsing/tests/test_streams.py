@@ -80,6 +80,10 @@ class TestCursorString(unittest.TestCase):
         except EndOfStringError as e:
             self.assertEqual(e.result, 'arst')
 
+    def test_reading_less_than_zero_chars_raises_an_error(self):
+        with self.assertRaises(ValueError):
+            self.s.read(-1)
+
 
 class TestScrollingStream(unittest.TestCase):
     def setUp(self):
