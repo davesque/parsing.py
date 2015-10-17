@@ -3,7 +3,7 @@ import operator
 
 
 def truncate(s):
-    return s[:10] + '...' if len(s) > 10 else s
+    return '{0:.10}...'.format(s) if len(s) > 10 else s
 
 
 def join(xs):
