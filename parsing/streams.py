@@ -26,9 +26,6 @@ class CursorString(object):
     def position(self):
         return self._line, self._col
 
-    def __add__(self, s):
-        return type(self)(self._s + s)
-
     def __eq__(self, other):
         if isinstance(other, CursorString):
             return self._s == other._s
