@@ -53,15 +53,15 @@ class TestTakeItemsIf(unittest.TestCase):
         self.p = TakeItemsIf(3, is_alpha)
 
     def test_it_should_conditionally_parse_the_given_number_of_characters(self):
-        self.assertEqual(self.p.parse('arst'), ('ars', 't'))
+        self.assertEqual(self.p.parse_string('arst'), ('ars', 't'))
 
     def test_it_should_be_invertible(self):
         p = ~(self.p)
-        self.assertEqual(p.parse('1234'), ('123', '4'))
+        self.assertEqual(p.parse_string('1234'), ('123', '4'))
 
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         with self.assertRaises(ImproperInputError):
-            self.p.parse('ar12')
+            self.p.parse_string('ar12')
 
 
 class TestTakeWhile(unittest.TestCase):

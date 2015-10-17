@@ -53,7 +53,7 @@ class TakeIf(Parser):
         x, xs = self.p(xs)
 
         if not self.f(x):
-            raise ImproperInputError('Condition not met for "{0}" parsed from "{1}"'.format(
+            raise xs.get_error(ImproperInputError, 'Condition not met for "{0}" parsed from "{1}"'.format(
                 truncate(x),
                 truncate(xs),
             ))
