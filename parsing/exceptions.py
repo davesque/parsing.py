@@ -8,3 +8,7 @@ class NotEnoughInputError(ParseError):
 
 class ImproperInputError(ParseError):
     pass
+
+
+class PlaceholderError(Exception):
+    pass

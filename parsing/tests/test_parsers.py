@@ -3,10 +3,11 @@ from __future__ import unicode_literals
 import unittest
 
 from ..basic import digits, alphas, spaces, positive_integer
-from ..exceptions import NotEnoughInputError, ImproperInputError
+from ..exceptions import NotEnoughInputError, ImproperInputError, PlaceholderError
 from ..parsers import (
     TakeItems, TakeItemsIf, TakeWhile, TakeUntil, Token, TakeIf, TakeAll,
     Apply, Literal, Discardable, Discard, Sequence, Optional, Alternatives,
+    Placeholder,
 )
 from ..utils import compose, flatten, join, is_alpha, unary, equals
 
@@ -268,3 +269,33 @@ class TestDiscard(unittest.TestCase):
         # In this case, it should parse the given string and mark it as
         # discardable
         self.assertEqual(Discard('arst').parse_string('arst'), (Discardable('arst'), ''))
+
+
+class TestPlaceholder(unittest.TestCase):
+    def test_it_should_represent_a_parser_which_is_not_yet_defined(self):
+        p = Placeholder()
+        p.set(Literal('arst'))
+        self.assertEqual(p.parse_string('arst'), ('arst', ''))
+
+    def test_it_should_raise_an_error_if_unset(self):
+        p = Placeholder()
+
+        with self.assertRaises(PlaceholderError):
+            p.parse_string('arst')
+
+    def test_it_should_allow_definition_of_recursive_parsers(self):
+        paren_expression = Placeholder()
+        paren_expression.set(Sequence(
+            Literal('('),
+            Optional(paren_expression),
+            Literal(')'),
+        ))
+
+        self.assertEqual(
+            paren_expression.parse_string('()'),
+            (('(', ')'), ''),
+        )
+        self.assertEqual(
+            paren_expression.parse_string('(())'),
+            (('(', ('(', ')'), ')'), ''),
+        )

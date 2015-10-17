@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from .exceptions import ParseError, NotEnoughInputError, ImproperInputError
+from .exceptions import ParseError, NotEnoughInputError, ImproperInputError, PlaceholderError
 from .streams import EndOfStringError, CursorString
 from .utils import truncate, equals
 
@@ -309,3 +309,23 @@ class Apply(Parser):
     def parse(self, xs):
         x, xs = self.p(xs)
         return (self.f(x), xs)
+
+
+class Placeholder(Parser):
+    """
+    Acts as a proxy to the parser ``p`` which is given as an argument to the
+    ``set`` method.  Allows for definition of recursive parsers.  A parser may
+    be defined as a placeholder and then may refer to this placeholder when the
+    actual parsing operation is defined with ``set``.
+    """
+    def __init__(self):
+        self.p = None
+
+    def set(self, p):
+        self.p = p
+
+    def parse(self, *args, **kwargs):
+        if self.p is None:
+            raise PlaceholderError('Placeholder not yet defined')
+
+        return self.p(*args, **kwargs)
