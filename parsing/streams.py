@@ -16,6 +16,39 @@ class BeginningOfStreamError(EndOfStreamError):
     pass
 
 
+class CursorString(object):
+    def __init__(self, s, line=1, col=1):
+        self._s = s
+        self._line = line
+        self._col = col
+
+    @property
+    def position(self):
+        return self._line, self._col
+
+    def __add__(self, s):
+        return type(self)(self._s + s)
+
+    def __eq__(self, other):
+        if isinstance(other, CursorString):
+            return self._s == other._s
+
+        return self._s == other
+
+    def read(self, n):
+        s = self._s
+        x, xs = s[:n], s[n:]
+
+        ls = x.split(u'\n')
+        dl, dc = len(ls) - 1, len(ls[-1])
+
+        return (x, type(self)(
+            xs,
+            self._line + dl,
+            self._col + dc if dl == 0 else 1 + dc,
+        ))
+
+
 class Stream(object):
     def __init__(self, s):
         self._stream = StringIO(s) if isinstance(s, basestring) else s
