@@ -1,7 +1,10 @@
 from StringIO import StringIO
 import unittest
 
-from ..streams import EndOfStreamError, BeginningOfStreamError, Stream, ScrollingStream, CursorString
+from ..streams import (
+    EndOfStreamError, BeginningOfStreamError, Stream, ScrollingStream,
+    CursorString, EndOfStringError,
+)
 
 
 class TestCursorString(unittest.TestCase):
@@ -50,6 +53,32 @@ class TestCursorString(unittest.TestCase):
     def test_it_should_allow_comparison_with_other_strings_or_cursor_strings(self):
         self.assertEqual(self.s, 'arst\n1234\n\n')
         self.assertEqual(self.s, CursorString('arst\n1234\n\n'))
+
+    def test_reading_None_chars_should_read_entire_string(self):
+        x, xs = self.s.read()
+        self.assertEqual(x, 'arst\n1234\n\n')
+        self.assertEqual(xs, '')
+        self.assertEqual(xs.position, (4, 1))
+
+    def test_reading_anything_from_empty_string_should_raise_error(self):
+        s = CursorString('')
+
+        with self.assertRaises(EndOfStringError):
+            s.read()
+
+        with self.assertRaises(EndOfStringError):
+            s.read(1)
+
+    def test_reading_less_chars_than_requested_raises_an_error(self):
+        s = CursorString('arst')
+
+        with self.assertRaises(EndOfStringError):
+            s.read(5)
+
+        try:
+            s.read(5)
+        except EndOfStringError as e:
+            self.assertEqual(e.result, 'arst')
 
 
 class TestScrollingStream(unittest.TestCase):

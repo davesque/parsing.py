@@ -2,6 +2,12 @@ from StringIO import StringIO
 from collections import deque
 
 
+class EndOfStringError(Exception):
+    def __init__(self, msg, result=None):
+        super(EndOfStringError, self).__init__(msg)
+        self.result = result
+
+
 class StreamError(Exception):
     pass
 
@@ -32,9 +38,19 @@ class CursorString(object):
 
         return self._s == other
 
-    def read(self, n):
+    def read(self, n=None):
         s = self._s
-        x, xs = s[:n], s[n:]
+
+        if len(s) == 0:
+            raise EndOfStringError('End of string reached')
+
+        if n is None:
+            x, xs = s, ''
+        else:
+            x, xs = s[:n], s[n:]
+
+        if len(x) < n:
+            raise EndOfStringError('End of string reached', x)
 
         ls = x.split(u'\n')
         dl, dc = len(ls) - 1, len(ls[-1])
