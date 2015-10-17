@@ -270,7 +270,7 @@ class Sequence(Compound):
                     result.append(x)
 
         except ParseError:
-            raise ImproperInputError('Sequence not found in string "{0}"'.format(
+            raise xs_.get_error(ImproperInputError, 'Sequence not found in string "{0}"'.format(
                 truncate(xs_),
             ))
 
@@ -290,7 +290,7 @@ class Alternatives(Compound):
             except ParseError:
                 pass
 
-        raise ImproperInputError('No alternatives found in string "{0}"'.format(
+        raise xs.get_error(ImproperInputError, 'No alternatives found in string "{0}"'.format(
             truncate(xs),
         ))
 

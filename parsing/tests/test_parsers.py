@@ -12,23 +12,23 @@ from ..utils import compose, flatten, join, is_alpha, unary, equals
 class TestParserBuilding(unittest.TestCase):
     def test_it_should_allow_building_of_parser_with_bitwise_operations(self):
         p1 = alphas & digits
-        self.assertEqual(p1.parse('arst1234'), (('arst', '1234'), ''))
+        self.assertEqual(p1.parse_string('arst1234'), (('arst', '1234'), ''))
 
         p2 = alphas | digits
-        self.assertEqual(p2.parse('arst1234'), ('arst', '1234'))
-        self.assertEqual(p2.parse('1234arst'), ('1234', 'arst'))
+        self.assertEqual(p2.parse_string('arst1234'), ('arst', '1234'))
+        self.assertEqual(p2.parse_string('1234arst'), ('1234', 'arst'))
 
         p3 = positive_integer | (alphas & (digits | spaces))
         self.assertEqual(
-            p3.parse('1234arst1234    '),
+            p3.parse_string('1234arst1234    '),
             (1234, 'arst1234    '),
         )
         self.assertEqual(
-            p3.parse('arst1234    1234'),
+            p3.parse_string('arst1234    1234'),
             (('arst', '1234'), '    1234'),
         )
         self.assertEqual(
-            p3.parse('arst    1234'),
+            p3.parse_string('arst    1234'),
             (('arst', '    '), '1234'),
         )
 
@@ -140,27 +140,27 @@ class TestTakeAll(unittest.TestCase):
         self.p = TakeAll(Token(alphas))
 
     def test_it_should_parse_input_using_the_given_parser_until_it_fails(self):
-        self.assertEqual(self.p.parse('arst arst arst 1234'), (('arst', 'arst', 'arst'), '1234'))
+        self.assertEqual(self.p.parse_string('arst arst arst 1234'), (('arst', 'arst', 'arst'), '1234'))
 
     def test_it_should_raise_an_error_if_nothing_can_be_parsed(self):
         with self.assertRaises(ImproperInputError):
-            self.p.parse('1234 arst')
+            self.p.parse_string('1234 arst')
 
 
 class TestPositiveInteger(unittest.TestCase):
     def test_it_should_parse_digits_and_return_a_number(self):
-        self.assertEqual(positive_integer.parse('1234 arst'), (1234, ' arst'))
+        self.assertEqual(positive_integer.parse_string('1234 arst'), (1234, ' arst'))
 
 
 class TestLiteral(unittest.TestCase):
     def test_it_should_parse_a_specific_string_from_the_front_of_the_input(self):
         p = Literal('arst')
 
-        self.assertEqual(p.parse('arst1234'), ('arst', '1234'))
+        self.assertEqual(p.parse_string('arst1234'), ('arst', '1234'))
 
     def test_it_should_raise_an_error_if_parsing_fails(self):
         with self.assertRaises(ImproperInputError):
-            Literal('arst').parse('ars1234')
+            Literal('arst').parse_string('ars1234')
 
 
 class TestSequence(unittest.TestCase):
@@ -177,31 +177,31 @@ class TestSequence(unittest.TestCase):
         )
 
     def test_it_should_combine_parsers_to_make_a_larger_parser(self):
-        self.assertEqual(self.p1.parse('arst = 1234 '), (('arst', '=', 1234), ''))
+        self.assertEqual(self.p1.parse_string('arst = 1234 '), (('arst', '=', 1234), ''))
 
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         with self.assertRaises(ImproperInputError):
-            self.p1.parse('arst = ')
+            self.p1.parse_string('arst = ')
 
     def test_it_should_not_include_discardable_results(self):
-        self.assertEqual(self.p2.parse('arst = 1234 '), (('arst', 1234), ''))
+        self.assertEqual(self.p2.parse_string('arst = 1234 '), (('arst', 1234), ''))
 
 
 class TestOptional(unittest.TestCase):
     def test_it_should_make_a_parser_optional(self):
         p1 = Optional(Literal('a'))
 
-        self.assertEqual(p1.parse('arst'), ('a', 'rst'))
-        self.assertEqual(p1.parse('rst'), (Discardable(None), 'rst'))
+        self.assertEqual(p1.parse_string('arst'), ('a', 'rst'))
+        self.assertEqual(p1.parse_string('rst'), (Discardable(None), 'rst'))
 
         p2 = Apply(
             compose(tuple, flatten),
             digits & Optional(Literal('.') & digits),
         )
 
-        self.assertEqual(p2.parse('1234'), (('1234',), ''))
-        self.assertEqual(p2.parse('1234.'), (('1234',), '.'))
-        self.assertEqual(p2.parse('1234.1234'), (('1234', '.', '1234'), ''))
+        self.assertEqual(p2.parse_string('1234'), (('1234',), ''))
+        self.assertEqual(p2.parse_string('1234.'), (('1234',), '.'))
+        self.assertEqual(p2.parse_string('1234.1234'), (('1234', '.', '1234'), ''))
 
 
 class TestApply(unittest.TestCase):
@@ -226,19 +226,19 @@ class TestApply(unittest.TestCase):
         )
 
     def test_it_should_apply_a_function_to_parser_results(self):
-        x, xs = self.p1.parse('arst = 1234')
+        x, xs = self.p1.parse_string('arst = 1234')
 
         self.assertIsInstance(x, self.Statement)
         self.assertEqual(x.label, 'arst')
         self.assertEqual(x.value, 1234)
 
-        x, xs = self.p2.parse('1234')
+        x, xs = self.p2.parse_string('1234')
         self.assertEqual(x, 1234.)
 
-        x, xs = self.p2.parse('1234.')
+        x, xs = self.p2.parse_string('1234.')
         self.assertEqual(x, 1234.)
 
-        x, xs = self.p2.parse('1234.1234')
+        x, xs = self.p2.parse_string('1234.1234')
         self.assertEqual(x, 1234.1234)
 
 
@@ -250,19 +250,19 @@ class TestAlternatives(unittest.TestCase):
         )
 
     def test_it_should_combine_parsers_to_make_a_larger_parser(self):
-        self.assertEqual(self.p.parse('arst1234'), ('arst', '1234'))
-        self.assertEqual(self.p.parse('1234arst'), ('1234', 'arst'))
+        self.assertEqual(self.p.parse_string('arst1234'), ('arst', '1234'))
+        self.assertEqual(self.p.parse_string('1234arst'), ('1234', 'arst'))
 
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         with self.assertRaises(ImproperInputError):
-            self.p.parse('   arst')
+            self.p.parse_string('   arst')
 
 
 class TestDiscard(unittest.TestCase):
     def test_it_should_parse_using_the_given_parser_and_mark_the_result_as_discardable(self):
-        self.assertEqual(Discard(Literal('arst')).parse('arst'), (Discardable('arst'), ''))
+        self.assertEqual(Discard(Literal('arst')).parse_string('arst'), (Discardable('arst'), ''))
 
     def test_it_should_accept_a_string_as_an_argument(self):
         # In this case, it should parse the given string and mark it as
         # discardable
-        self.assertEqual(Discard('arst').parse('arst'), (Discardable('arst'), ''))
+        self.assertEqual(Discard('arst').parse_string('arst'), (Discardable('arst'), ''))
