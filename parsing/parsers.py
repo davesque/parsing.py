@@ -329,3 +329,13 @@ class Placeholder(Parser):
             raise PlaceholderError('Placeholder not yet defined')
 
         return self.p(*args, **kwargs)
+
+
+class First(Apply):
+    """
+    Augments a parser to return only the first item in its result assuming its
+    result is indexable.  Useful for simplifying the behavior of sequence
+    parsers which discard all but one result.
+    """
+    def __init__(self, p):
+        super(First, self).__init__(lambda t: t[0], p)

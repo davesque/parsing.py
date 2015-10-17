@@ -7,7 +7,7 @@ from ..exceptions import NotEnoughInputError, ImproperInputError, PlaceholderErr
 from ..parsers import (
     TakeItems, TakeItemsIf, TakeWhile, TakeUntil, Token, TakeIf, TakeAll,
     Apply, Literal, Discardable, Discard, Sequence, Optional, Alternatives,
-    Placeholder,
+    Placeholder, First,
 )
 from ..utils import compose, flatten, join, is_alpha, unary, equals
 
@@ -299,3 +299,15 @@ class TestPlaceholder(unittest.TestCase):
             paren_expression.parse_string('(())'),
             (('(', ('(', ')'), ')'), ''),
         )
+
+
+class TestFirst(unittest.TestCase):
+    def test_it_should_return_the_first_parsed_value_in_a_sequence(self):
+        d_quo = Literal('"')
+        double_quoted_value = First(Sequence(
+            Discard(d_quo),
+            TakeUntil(d_quo),
+            Discard(d_quo),
+        ))
+
+        self.assertEqual(double_quoted_value.parse_string('"arst"'), ('arst', ''))
