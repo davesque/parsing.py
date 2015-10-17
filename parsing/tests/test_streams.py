@@ -84,6 +84,9 @@ class TestCursorString(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.s.read(-1)
 
+    def test_it_can_be_cast_as_a_string(self):
+        self.assertEqual(str(self.s), 'arst\n1234\n\n')
+
 
 class TestScrollingStream(unittest.TestCase):
     def setUp(self):

@@ -40,6 +40,9 @@ class CursorString(object):
 
         return self._s == other
 
+    def __str__(self):
+        return self._s
+
     def read(self, n=None):
         s = self._s
 
