@@ -1,4 +1,5 @@
 from .exceptions import ParseError, NotEnoughInputError, ImproperInputError
+from .streams import EndOfStringError, CursorString
 from .utils import truncate, equals
 
 
@@ -11,6 +12,9 @@ class Parser(object):
 
     def __or__(self, other):
         return Alternatives(self, other)
+
+    def parse_string(self, s):
+        return self.parse(CursorString(s))
 
 
 class TakeItems(Parser):
@@ -27,14 +31,13 @@ class TakeItems(Parser):
     def parse(self, xs):
         n = self.n
 
-        # If sequence not long enough, raise
-        if n > len(xs):
-            raise NotEnoughInputError('Expected at least {0} char(s) in string "{1}"'.format(
+        try:
+            return xs.read(n)
+        except EndOfStringError:
+            raise xs.get_error(NotEnoughInputError, 'Expected at least {0} char(s) in string "{1}"'.format(
                 n,
                 truncate(xs),
             ))
-
-        return (xs[:n], xs[n:])
 
 
 class TakeIf(Parser):

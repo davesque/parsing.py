@@ -37,7 +37,7 @@ class TestTakeItems(unittest.TestCase):
     def test_it_should_parse_the_given_number_of_characters(self):
         p = TakeItems(3)
 
-        self.assertEqual(p.parse('arst'), ('ars', 't'))
+        self.assertEqual(p.parse_string('arst'), ('ars', 't'))
 
     def test_it_should_require_a_number_greater_than_zero(self):
         with self.assertRaises(ValueError):
@@ -45,7 +45,7 @@ class TestTakeItems(unittest.TestCase):
 
     def test_it_should_raise_an_exception_if_parsing_fails(self):
         with self.assertRaises(NotEnoughInputError):
-            TakeItems(10).parse('arst')
+            TakeItems(10).parse_string('arst')
 
 
 class TestTakeItemsIf(unittest.TestCase):

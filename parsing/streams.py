@@ -68,6 +68,13 @@ class CursorString(object):
             self._col + dc if dl == 0 else 1 + dc,
         ))
 
+    def get_error(self, ErrorClass, msg):
+        p = self.position
+
+        return ErrorClass('At line {0}, col {1}: {2}'.format(
+            p[0], p[1], msg,
+        ))
+
 
 class Stream(object):
     def __init__(self, s):
