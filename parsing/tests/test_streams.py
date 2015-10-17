@@ -87,6 +87,9 @@ class TestCursorString(unittest.TestCase):
     def test_it_can_be_cast_as_a_string(self):
         self.assertEqual(str(self.s), 'arst\n1234\n\n')
 
+    def test_its_length_can_be_determined(self):
+        self.assertEqual(len(self.s), 11)
+
 
 class TestScrollingStream(unittest.TestCase):
     def setUp(self):

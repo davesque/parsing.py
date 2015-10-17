@@ -43,6 +43,9 @@ class CursorString(object):
     def __str__(self):
         return self._s
 
+    def __len__(self):
+        return len(self._s)
+
     def read(self, n=None):
         s = self._s
 
