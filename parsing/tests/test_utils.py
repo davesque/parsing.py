@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import unittest
 
 from ..utils import compose, flatten, truncate, join, unary, equals

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from .exceptions import ParseError, NotEnoughInputError, ImproperInputError
 from .streams import EndOfStringError, CursorString
 from .utils import truncate, equals
