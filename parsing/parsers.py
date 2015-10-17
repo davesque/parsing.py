@@ -49,13 +49,13 @@ class TakeIf(Parser):
         self.p = p
         self.f = f
 
-    def parse(self, xs):
-        x, xs = self.p(xs)
+    def parse(self, xs_):
+        x, xs = self.p(xs_)
 
         if not self.f(x):
-            raise xs.get_error(ImproperInputError, 'Condition not met for "{0}" parsed from "{1}"'.format(
+            raise xs_.get_error(ImproperInputError, 'Condition not met for "{0}" parsed from "{1}"'.format(
                 truncate(x),
-                truncate(xs),
+                truncate(xs_),
             ))
 
         return (x, xs)
