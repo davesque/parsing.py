@@ -184,9 +184,9 @@ class TakeAll(Parser):
 
 class Token(Parser):
     """
-    Augments the given parser ``p`` to expect and consume whitespace after any
-    items successfully parsed by ``p``.  The parser ``separation_parser`` can
-    be provided to customize whitespace parsing behavior.
+    Augments the given parser ``p`` to consume any whitespace after items
+    successfully parsed by ``p``.  The parser ``separation_parser`` can be
+    provided to customize whitespace parsing behavior.
     """
     def __init__(self, p, separation_parser=None):
         self.p = p
@@ -202,7 +202,7 @@ class Token(Parser):
 
         try:
             _, xs = self.s(xs)
-        except NotEnoughInputError:
+        except (NotEnoughInputError, ImproperInputError):
             pass
 
         return (x, xs)
