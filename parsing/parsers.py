@@ -256,8 +256,8 @@ class Compound(Parser):
 class Sequence(Compound):
     """
     Constructs a compound parser with the given parsers ``ps``.  The compound
-    parser will return the results of all parsers in ``ps`` as a flattened
-    tuple.  It fails if any parser in ``ps`` fails.
+    parser will return the results of all parsers in ``ps`` as a tuple.  It
+    fails if any parser in ``ps`` fails.
     """
     def parse(self, xs):
         result = []
